@@ -1,6 +1,7 @@
 package com.gotryt.coop.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -15,6 +16,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Boolean existsByMemship(String memship);
 
     User findByMemship(String memship);
+    Optional<User> findByEmail(String email);
     
     List<User> findByStatus(String status);
 

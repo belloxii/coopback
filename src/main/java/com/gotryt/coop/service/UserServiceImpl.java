@@ -57,6 +57,16 @@ public class UserServiceImpl implements UserService {
                 .build();
         }
 
+if (userRepository.existsByEmail(userRequest.getEmail()) 
+        && "NEW".equalsIgnoreCase(userRequest.getStatus())) {
+    
+    return AuthResponse.builder()
+        .responseCode("419")
+        .responseMessage("Your account has been created, please wait for the admin to review and activate your account!")
+        .jwt(null)
+        .build();
+}
+
         User newUser = User.builder()
             .firstName(userRequest.getFirstName())
             .lastName(userRequest.getLastName())

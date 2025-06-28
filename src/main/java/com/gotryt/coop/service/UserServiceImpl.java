@@ -5,6 +5,7 @@ import com.gotryt.coop.exception.UserException;
 import com.gotryt.coop.model.Role;
 import com.gotryt.coop.model.User;
 import com.gotryt.coop.repository.UserRepository;
+import com.gotryt.coop.utils.MemshipGen;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import com.gotryt.coop.config.JwtProvider;
 import com.gotryt.coop.dto.AuthResponse;
+import com.gotryt.coop.dto.EmailDetails;
 import com.gotryt.coop.dto.LoginDto;
 
 
@@ -37,6 +39,8 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     JwtProvider JwtProvider;
+
+
 
     @Override
     public AuthResponse createAccount(UserRequest userRequest) {
@@ -67,6 +71,9 @@ if (userRepository.existsByEmail(userRequest.getEmail())
         .build();
 }
 
+Integer lastLedgerNumber = userRepository.findMaxLedgerNumber();
+    int nextLedgerNumber = (lastLedgerNumber == null) ? 1 : lastLedgerNumber + 1;
+
         User newUser = User.builder()
             .firstName(userRequest.getFirstName())
             .lastName(userRequest.getLastName())
@@ -84,7 +91,7 @@ if (userRepository.existsByEmail(userRequest.getEmail())
             .lga(userRequest.getLga())
             .station(userRequest.getStation())
             .password(passwordEncoder.encode("123456"))
-            .memship(userRequest.getMemship())
+            .memship(MemshipGen.genMemship(nextLedgerNumber))
             .savingsBalance(BigDecimal.ZERO)
             .loanBalance(BigDecimal.ZERO)
             .sharesBalance(BigDecimal.ZERO)
@@ -102,19 +109,18 @@ if (userRepository.existsByEmail(userRequest.getEmail())
 
         String jwt = JwtProvider.generateToken(authentication);
 
-        // String names = createdUser.getFirstName() +" "+ createdUser.getLastName() +" "+ createdUser.getMiddleName();
+        String names = createdUser.getFirstName() +" "+ createdUser.getLastName() +" "+ createdUser.getMiddleName();
         
-        // EmailDetails emailDetails = EmailDetails.builder()
-        //         .recipient(createdUser.getEmail())
-        //         .subject("New account creation")
-        //         .message("Congratulations, your account has been created \nYour account details are as follows: \n\nAccount Name:" + names + "\nAccount Number: " + createdUser.getMemship() +"\n")
-        //     .build();
-
-        // emailService.sendEmail(emailDetails);
+        EmailDetails emailDetails = EmailDetails.builder()
+                .recipient(createdUser.getEmail())
+                .subject("New account creation")
+                .message("Congratulations, your account has been created \nYour account details are as follows: \n\nAccount Name:" + names + "\nAccount Number: " + createdUser.getMemship() +"\n\nYou will be notified via email once an admin revievs your profile.")
+            .build();
+        emailService.sendEmail(emailDetails);
 
         return AuthResponse.builder()
                 .responseCode("100")
-                .responseMessage("New user created successfully")
+                .responseMessage("Account created successfully! Kindly check your email for more info.")
                 .jwt(jwt)
                 // .user(createdUser)
             .build();
@@ -125,6 +131,16 @@ if (userRepository.existsByEmail(userRequest.getEmail())
     
         String memship = loginDto.getMemship();
         User user = userRepository.findByMemship(memship);
+        
+        if (userRepository.existsByMemship(loginDto.getMemship()) 
+            && "NEW".equalsIgnoreCase(user.getStatus())) {
+                
+                return AuthResponse.builder()
+                    .responseCode("419")
+                    .responseMessage("Your account has been created, please wait for the admin to review and activate your account!")
+                    .jwt(null)
+                    .build();
+            }
     
         if (user == null) {
             return AuthResponse.builder()
@@ -285,19 +301,5 @@ public List<User> addMultiUsers(List<User> users) throws UserException {
 
     return userRepository.saveAll(newUsers);
 }
-
-@Override
-public AuthResponse sendOtp() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'sendOtp'");
-}
-
-@Override
-public AuthResponse validateOtp() {
-    
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'validateOtp'");
-}
-
 
 }

@@ -17,7 +17,5 @@ public interface UserService {
     List<User> addMultiUsers(List<User> user) throws UserException;    
     public User updateUser(User user) throws UserException;
     public User activateUser(Long userId) throws UserException;
-    AuthResponse sendOtp();
-    AuthResponse validateOtp();
 
 }

@@ -45,9 +45,8 @@ public class AppConfig {
     private CorsConfigurationSource corsConfigurationSource() {
         return new CorsConfigurationSource() {
 
-            @Value("${FRONTEND_URL}")
+            @Value("${frontendUrl}")
             private String frontendUrl;
-
 
             @Override
             public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {

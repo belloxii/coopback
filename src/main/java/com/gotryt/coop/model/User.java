@@ -62,6 +62,7 @@ public class User implements UserDetails {
     private String phone2;
     private LocalDate dob;
     private String memship;
+    private int ledgerNumber;
     private String station;
     private String status;
     private String marital;

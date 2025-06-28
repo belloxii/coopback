@@ -10,6 +10,7 @@ import com.gotryt.coop.utils.MemshipGen;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,89 +43,97 @@ public class UserServiceImpl implements UserService {
 
 
 
-    @Override
-    public AuthResponse createAccount(UserRequest userRequest) {
+  @Override
+public AuthResponse createAccount(UserRequest userRequest) {
 
-        if (userRepository.existsByEmail(userRequest.getEmail())){
+    // Check if user with email already exists
+    Optional<User> existingUser = userRepository.findByEmail(userRequest.getEmail());
+    if (existingUser.isPresent()) {
+        if ("NEW".equalsIgnoreCase(existingUser.get().getStatus())) {
             return AuthResponse.builder()
-                    .responseCode("419")
-                    .responseMessage("email already exist!")
-                    .jwt(null)
+                .responseCode("419")
+                .responseMessage("Your account has been created, please wait for the admin to review and activate your account!")
+                .jwt(null)
                 .build();
         }
-
-        if (userRepository.existsByMemship(userRequest.getMemship())){
-            return AuthResponse.builder()
-                    .responseCode("419")
-                    .responseMessage("membership ID already exist!")
-                    .jwt(null)
-                .build();
-        }
-
-if (userRepository.existsByEmail(userRequest.getEmail()) 
-        && "NEW".equalsIgnoreCase(userRequest.getStatus())) {
-    
-    return AuthResponse.builder()
-        .responseCode("419")
-        .responseMessage("Your account has been created, please wait for the admin to review and activate your account!")
-        .jwt(null)
-        .build();
-}
-
-Integer lastLedgerNumber = userRepository.findMaxLedgerNumber();
-    int nextLedgerNumber = (lastLedgerNumber == null) ? 1 : lastLedgerNumber + 1;
-
-        User newUser = User.builder()
-            .firstName(userRequest.getFirstName())
-            .lastName(userRequest.getLastName())
-            .middleName(userRequest.getMiddleName())
-            .gender(userRequest.getGender())
-            .address(userRequest.getAddress())
-            .state(userRequest.getState())
-            .phone(userRequest.getPhone())
-            .phone2(userRequest.getPhone2())
-            .passport(userRequest.getPassport())
-            .email(userRequest.getEmail())
-            .dob(userRequest.getDob())
-            .marital(userRequest.getMarital())
-            .psn(userRequest.getPsn())
-            .lga(userRequest.getLga())
-            .station(userRequest.getStation())
-            .password(passwordEncoder.encode("123456"))
-            .memship(MemshipGen.genMemship(nextLedgerNumber))
-            .savingsBalance(BigDecimal.ZERO)
-            .loanBalance(BigDecimal.ZERO)
-            .sharesBalance(BigDecimal.ZERO)
-            .totalPurchase(BigDecimal.ZERO)
-            .plan(userRequest.getPlan())
-            .status("NEW")
-            .role(Role.MEMBER)
-            // .role(Role.valueOf("ADMIN"))
-            .build();
-
-        User createdUser = userRepository.save(newUser);
-
-        Authentication authentication = new UsernamePasswordAuthenticationToken(createdUser.getMemship(), userRequest.getPassword());
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        String jwt = JwtProvider.generateToken(authentication);
-
-        String names = createdUser.getFirstName() +" "+ createdUser.getLastName() +" "+ createdUser.getMiddleName();
-        
-        EmailDetails emailDetails = EmailDetails.builder()
-                .recipient(createdUser.getEmail())
-                .subject("New account creation")
-                .message("Congratulations, your account has been created \nYour account details are as follows: \n\nAccount Name:" + names + "\nAccount Number: " + createdUser.getMemship() +"\n\nYou will be notified via email once an admin revievs your profile.")
-            .build();
-        emailService.sendEmail(emailDetails);
-
         return AuthResponse.builder()
-                .responseCode("100")
-                .responseMessage("Account created successfully! Kindly check your email for more info.")
-                .jwt(jwt)
-                // .user(createdUser)
+            .responseCode("419")
+            .responseMessage("Email already exists!")
+            .jwt(null)
             .build();
     }
+
+    // Check for duplicate memship ID if it comes from the client (you can skip this if memship is generated)
+    if (userRequest.getMemship() != null && userRepository.existsByMemship(userRequest.getMemship())) {
+        return AuthResponse.builder()
+            .responseCode("419")
+            .responseMessage("Membership ID already exists!")
+            .jwt(null)
+            .build();
+    }
+
+    // Generate ledger number and memship
+    Integer lastLedgerNumber = userRepository.findMaxLedgerNumber();
+    int nextLedgerNumber = (lastLedgerNumber == null) ? 1 : lastLedgerNumber + 1;
+    String memship = MemshipGen.genMemship(nextLedgerNumber);
+
+    // Create user entity
+    User newUser = User.builder()
+        .firstName(userRequest.getFirstName())
+        .lastName(userRequest.getLastName())
+        .middleName(userRequest.getMiddleName())
+        .gender(userRequest.getGender())
+        .address(userRequest.getAddress())
+        .state(userRequest.getState())
+        .phone(userRequest.getPhone())
+        .phone2(userRequest.getPhone2())
+        .passport(userRequest.getPassport())
+        .email(userRequest.getEmail())
+        .dob(userRequest.getDob())
+        .marital(userRequest.getMarital())
+        .psn(userRequest.getPsn())
+        .lga(userRequest.getLga())
+        .station(userRequest.getStation())
+        .password(passwordEncoder.encode("123456")) // default password
+        .memship(memship)
+        .ledgerNumber(nextLedgerNumber)
+        .savingsBalance(BigDecimal.ZERO)
+        .loanBalance(BigDecimal.ZERO)
+        .sharesBalance(BigDecimal.ZERO)
+        .totalPurchase(BigDecimal.ZERO)
+        .plan(userRequest.getPlan())
+        .status("NEW")
+        .role(Role.MEMBER)
+        .build();
+
+    // Save to database
+    User createdUser = userRepository.save(newUser);
+
+    // Authenticate user
+    Authentication authentication = new UsernamePasswordAuthenticationToken(createdUser.getMemship(), "123456");
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+
+    String jwt = JwtProvider.generateToken(authentication);
+    String names = createdUser.getFirstName() + " " + createdUser.getLastName() + " " + createdUser.getMiddleName();
+
+    // Send welcome email
+    EmailDetails emailDetails = EmailDetails.builder()
+        .recipient(createdUser.getEmail())
+        .subject("New Account Creation")
+        .message("Congratulations, your account has been created.\n\n"
+                + "Account Name: " + names
+                + "\nAccount Number: " + createdUser.getMemship()
+                + "\n\nYou will be notified via email once an admin reviews your profile.")
+        .build();
+
+    emailService.sendEmail(emailDetails);
+
+    return AuthResponse.builder()
+        .responseCode("100")
+        .responseMessage("Account created successfully! Kindly check your email for more info.")
+        .jwt(jwt)
+        .build();
+}
 
     @Override
     public AuthResponse login(LoginDto loginDto) {

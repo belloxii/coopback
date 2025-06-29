@@ -57,7 +57,7 @@ public class OTPServiceImpl implements OTPService {
         emailService.sendEmail(EmailDetails.builder()
                 .subject("Do not disclose!!!")
                 .recipient(otpRequest.getEmail())
-                .message("Below is your One Time Password to complete your registration. \nThe OTP expires in 5 minutes. \nInput <"+otp+"> to continue in the app")
+                .message("Below is your One Time Password to complete your registration on COOPR8. \nThe OTP expires in 5 minutes. \nInput <"+otp+"> to continue in the app")
             .build());
 
         return CoopResponse.builder()

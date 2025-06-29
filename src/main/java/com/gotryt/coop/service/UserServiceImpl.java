@@ -115,10 +115,10 @@ public AuthResponse createAccount(UserRequest userRequest) {
     EmailDetails emailDetails = EmailDetails.builder()
         .recipient(createdUser.getEmail())
         .subject("New Account Creation")
-        .message("Congratulations, your account has been created.\n\n"
+        .message("Congratulations, your COOPR8 account has been created.\n\n"
                 + "Account Name: " + names
                 + "\nMembership Number: " + createdUser.getMemship()
-                + "\nPassword: 123456\n\nYou will be notified via email once an admin reviews your profile.")
+                + "\nPassword: 123456\n\nYou will be notified via email once an admin reviews your profile then you will be able to log in.")
         .build();
 
     emailService.sendEmail(emailDetails);
@@ -286,10 +286,10 @@ public AuthResponse createAccount(UserRequest userRequest) {
     EmailDetails emailDetails = EmailDetails.builder()
         .recipient(user.getEmail())
         .subject("Account Activated")
-        .message("Congratulations, your account has been activated.\n\n"
+        .message("Congratulations, your account COOPR8 has been activated.\n\n"
                 + "Account Name: " + names
                 + "\nMembership Number: " + user.getMemship()
-                + "\nPassword: 123456\n\nYou can now login to your cooperative account with your Membership Number and password.")
+                + "\nPassword: 123456\n\nYou can now login to your COOPR8 account with your Membership Number and password.")
         .build();
 
     emailService.sendEmail(emailDetails);

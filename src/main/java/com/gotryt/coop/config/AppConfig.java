@@ -45,13 +45,10 @@ public class AppConfig {
     private CorsConfigurationSource corsConfigurationSource() {
         return new CorsConfigurationSource() {
 
-            @Value("${frontend.url}")
-            private String frontendUrl;
-
             @Override
             public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
                 CorsConfiguration cfg = new CorsConfiguration();
-                cfg.setAllowedOrigins(Arrays.asList("http://localhost:3000", frontendUrl));
+                cfg.setAllowedOrigins(Arrays.asList("http://localhost:3000", "https://coopr8.vercel.app"));
                 cfg.setAllowedMethods(Collections.singletonList("*"));
                 cfg.setAllowCredentials(true);
                 cfg.setAllowedHeaders(Collections.singletonList("*"));

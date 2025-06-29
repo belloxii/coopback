@@ -109,11 +109,6 @@ public AuthResponse createAccount(UserRequest userRequest) {
     // Save to database
     User createdUser = userRepository.save(newUser);
 
-    // Authenticate user
-    Authentication authentication = new UsernamePasswordAuthenticationToken(createdUser.getMemship(), "123456");
-    SecurityContextHolder.getContext().setAuthentication(authentication);
-
-    String jwt = JwtProvider.generateToken(authentication);
     String names = createdUser.getFirstName() + " " + createdUser.getLastName() + " " + createdUser.getMiddleName();
 
     // Send welcome email
@@ -122,8 +117,8 @@ public AuthResponse createAccount(UserRequest userRequest) {
         .subject("New Account Creation")
         .message("Congratulations, your account has been created.\n\n"
                 + "Account Name: " + names
-                + "\nAccount Number: " + createdUser.getMemship()
-                + "\n\nYou will be notified via email once an admin reviews your profile.")
+                + "\nMembership Number: " + createdUser.getMemship()
+                + "\nPassword: 123456\n\nYou will be notified via email once an admin reviews your profile.")
         .build();
 
     emailService.sendEmail(emailDetails);
@@ -131,7 +126,6 @@ public AuthResponse createAccount(UserRequest userRequest) {
     return AuthResponse.builder()
         .responseCode("100")
         .responseMessage("Account created successfully! Kindly check your email for more info.")
-        .jwt(jwt)
         .build();
 }
 
@@ -285,6 +279,20 @@ public AuthResponse createAccount(UserRequest userRequest) {
 
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new UserException("User not found"));
+
+    String names = user.getFirstName() + " " + user.getLastName() + " " + user.getMiddleName();
+
+            // Send welcome email
+    EmailDetails emailDetails = EmailDetails.builder()
+        .recipient(user.getEmail())
+        .subject("Account Activated")
+        .message("Congratulations, your account has been activated.\n\n"
+                + "Account Name: " + names
+                + "\nMembership Number: " + user.getMemship()
+                + "\nPassword: 123456\n\nYou can now login to your cooperative account with your Membership Number and password.")
+        .build();
+
+    emailService.sendEmail(emailDetails);
 
         user.setStatus("ACTIVE");
 

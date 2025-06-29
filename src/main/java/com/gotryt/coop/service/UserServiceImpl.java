@@ -140,7 +140,7 @@ public AuthResponse createAccount(UserRequest userRequest) {
                 
                 return AuthResponse.builder()
                     .responseCode("419")
-                    .responseMessage("Your account has been created, please wait for the admin to review and activate your account!\n\nYou will be notified via email once your account is activated.")
+                    .responseMessage("Your account has been created, please wait for the admin to review and activate your account!\n\nYou will be notified via email once your account is activated❤️.")
                     .jwt(null)
                     .build();
             }

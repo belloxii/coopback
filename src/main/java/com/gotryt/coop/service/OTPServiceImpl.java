@@ -32,12 +32,12 @@ public class OTPServiceImpl implements OTPService {
             if ("NEW".equalsIgnoreCase(existingUser.get().getStatus())) {
                 return CoopResponse.builder()
                     .responseCode("419")
-                    .responseMessage("Your account is pending admin approval.")
+                    .responseMessage("Your account is pending admin approval, please wait or contact an admin.")
                     .build();
             }
             return CoopResponse.builder()
                 .responseCode("419")
-                .responseMessage("There is already a registered user with this email.")
+                .responseMessage("There is already a registered user with this email, try to log in instaed.")
                 .build();
         }
 

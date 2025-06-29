@@ -6,7 +6,7 @@ public class MemshipGen {
 
     public static String genMemship(int ledgerNumber) {
         int currentYear = Year.now().getValue();
-        String paddedLedger = String.format("%04d", ledgerNumber);
+        String paddedLedger = String.format("%03d", ledgerNumber);
         return currentYear + paddedLedger;
     }
 }

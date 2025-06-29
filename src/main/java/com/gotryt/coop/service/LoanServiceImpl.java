@@ -46,7 +46,7 @@ public class LoanServiceImpl implements LoanService {
             .aza(loanRequest.getAza())
             .accountName(loanRequest.getAccountName())
             .purpose(loanRequest.getPurpose())
-            .status("submitted/pending")
+            .status("submitted")
             .build();
     
         loanRepository.save(applyLoan);
@@ -107,7 +107,7 @@ public class LoanServiceImpl implements LoanService {
             .orElseThrow(() -> new LoanException("Loan not found"));
 
         // Set loan details
-        applyLoan.setStatus("rejected");
+        applyLoan.setStatus("declined");
         applyLoan.setRemark(loanDto.getRemark());
 
    

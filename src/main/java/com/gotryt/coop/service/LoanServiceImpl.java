@@ -3,6 +3,8 @@ package com.gotryt.coop.service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -28,12 +30,19 @@ public class LoanServiceImpl implements LoanService {
     public LoanResponse applyLoan(User user, LoanDto loanRequest) throws LoanException {
         
         // Check if user has an outstanding loan balance
-        if (user.getLoanBalance().compareTo(BigDecimal.ZERO) > 0) {
-            return LoanResponse.builder()
-            .responseCode("419")
-            .responseMessage("Outstanding loan balance must be cleared before applying for a new loan.")
-            .build(); 
-        }    
+        Optional<Loan> existingUnpaidLoan = loanRepository.findFirstByUserAndTypeAndStatusIn(
+                user,
+                loanRequest.getType(),
+                List.of("approved", "submitted") // or any status that indicates it's not completed/cleared
+            );
+
+            if (existingUnpaidLoan.isPresent() && existingUnpaidLoan.get().getBalance().compareTo(BigDecimal.ZERO) > 0) {
+                return LoanResponse.builder()
+                    .responseCode("419")
+                    .responseMessage("You have an outstanding " + loanRequest.getType() + " loan that must be repaid before applying again.")
+                    .build();
+            }
+
     
         // Create new loan application
         Loan applyLoan = Loan.builder()

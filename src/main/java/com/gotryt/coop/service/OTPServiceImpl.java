@@ -28,6 +28,9 @@ public class OTPServiceImpl implements OTPService {
     public CoopResponse sendOTP(OTPRequest otpRequest){
         Optional<User> existingUser = userRepository.findByEmail(otpRequest.getEmail());
 
+        if (otpRequest.getAction().equals("signup")) {
+            
+
         if (existingUser.isPresent()) {
             if ("NEW".equalsIgnoreCase(existingUser.get().getStatus())) {
                 return CoopResponse.builder()
@@ -40,6 +43,7 @@ public class OTPServiceImpl implements OTPService {
                 .responseMessage("There is already a registered user with this email, try to log in instaed.")
                 .build();
         }
+        }
 
         OTP existingOTP = otpRepository.findByEmail(otpRequest.getEmail());
         if (existingOTP != null) {
@@ -51,13 +55,13 @@ public class OTPServiceImpl implements OTPService {
         otpRepository.save(OTP.builder()
                 .email(otpRequest.getEmail())
                 .otp(otp)
-                .expiredAt(LocalDateTime.now().plusMinutes(5))
+                .expiredAt(LocalDateTime.now().plusMinutes(10))
             .build());
 
         emailService.sendEmail(EmailDetails.builder()
                 .subject("Do not disclose!!!")
                 .recipient(otpRequest.getEmail())
-                .message("Below is your One Time Password to complete your registration on COOPR8. \nThe OTP expires in 5 minutes. \nInput <"+otp+"> to continue in the app")
+                .message("Below is your One Time Password. \nThe OTP expires in 10 minutes. \nInput <"+otp+"> to continue in the COOPR8 app")
             .build());
 
         return CoopResponse.builder()

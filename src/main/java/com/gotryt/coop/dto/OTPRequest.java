@@ -13,5 +13,6 @@ public class OTPRequest {
 
     private String email;
     private String otp;
+    private String actionType;
 
 }

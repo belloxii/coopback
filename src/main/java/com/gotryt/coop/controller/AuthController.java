@@ -3,14 +3,19 @@ package com.gotryt.coop.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.gotryt.coop.dto.AuthResponse;
+import com.gotryt.coop.dto.CoopResponse;
 import com.gotryt.coop.dto.LoginDto;
+import com.gotryt.coop.dto.PasswordDto;
 import com.gotryt.coop.dto.UserRequest;
+import com.gotryt.coop.exception.UserException;
+import com.gotryt.coop.model.User;
 import com.gotryt.coop.service.UserService;
 
 
@@ -34,6 +39,12 @@ public class AuthController {
     @GetMapping("/profile")
     public AuthResponse getUserProfile(@RequestHeader("Authorization") String jwt) {                          
         return userService.findUserProfileByJwt(jwt);
+    }
+
+    @PutMapping("/changepass")
+    public CoopResponse changePass(@RequestHeader("Authorization") String jwt, @RequestBody PasswordDto passwordDto) throws UserException {   
+        User user = userService.findUserProfileByJwt(jwt).getUser();                       
+        return userService.changePassword(user, passwordDto);
     }
     
 }

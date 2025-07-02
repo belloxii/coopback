@@ -2,10 +2,14 @@ package com.gotryt.coop.service;
 
 import com.gotryt.coop.dto.UserRequest;
 import com.gotryt.coop.exception.UserException;
+import com.gotryt.coop.model.OTP;
 import com.gotryt.coop.model.Role;
 import com.gotryt.coop.model.User;
+import com.gotryt.coop.repository.OTPRepository;
 import com.gotryt.coop.repository.UserRepository;
 import com.gotryt.coop.utils.MemshipGen;
+
+import lombok.RequiredArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -13,7 +17,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -22,26 +25,21 @@ import org.springframework.stereotype.Service;
 
 import com.gotryt.coop.config.JwtProvider;
 import com.gotryt.coop.dto.AuthResponse;
+import com.gotryt.coop.dto.CoopResponse;
 import com.gotryt.coop.dto.EmailDetails;
 import com.gotryt.coop.dto.LoginDto;
+import com.gotryt.coop.dto.PasswordDto;
 
 
 @Service
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
-    @Autowired
-    UserRepository userRepository;
-
-    @Autowired
-    EmailService emailService;
-
-    @Autowired
-    PasswordEncoder passwordEncoder;
-
-    @Autowired
-    JwtProvider JwtProvider;
-
-
+    private final UserRepository userRepository;
+    private final EmailService emailService;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtProvider jwtProvider;
+    private final OTPRepository otpRepository;
 
   @Override
 public AuthResponse createAccount(UserRequest userRequest) {
@@ -165,7 +163,7 @@ public AuthResponse createAccount(UserRequest userRequest) {
         Authentication authentication = new UsernamePasswordAuthenticationToken(loginDto.getMemship(), loginDto.getPassword());
         SecurityContextHolder.getContext().setAuthentication(authentication);
     
-        String jwt = JwtProvider.generateToken(authentication);
+        String jwt = jwtProvider.generateToken(authentication);
     
         return AuthResponse.builder()
                 .responseCode("100")
@@ -177,7 +175,7 @@ public AuthResponse createAccount(UserRequest userRequest) {
     @Override
     public AuthResponse findUserProfileByJwt(String jwt)  {
 
-        String memship = JwtProvider.getMemshipFromToken(jwt);
+        String memship = jwtProvider.getMemshipFromToken(jwt);
         User user = userRepository.findByMemship(memship);
 
         if (user == null) {
@@ -272,6 +270,64 @@ public AuthResponse createAccount(UserRequest userRequest) {
         }
 
         return userRepository.save(user);
+    }
+
+    @Override
+    public CoopResponse changePassword(User user, PasswordDto passwordDto) {
+        CoopResponse response = new CoopResponse();
+
+        OTP otp = otpRepository.findByEmail(user.getEmail());
+        if (otp == null) {
+            return CoopResponse.builder()
+                .responseCode("100")
+                .responseMessage("you did not send any OTP")
+            .build();
+        }
+
+        if (otp.getExpiredAt().isBefore(LocalDateTime.now())) {
+            return CoopResponse.builder()
+                    .responseCode("419")
+                    .responseMessage("OTP expired")
+                .build();
+        }
+
+        if (!otp.getOtp().equals(passwordDto.getOtp())) {
+            
+            return CoopResponse.builder()
+                    .responseCode("419")
+                    .responseMessage("OTP is not correct")
+                .build();
+        }
+
+        // 1. Validate old password
+        if (!passwordEncoder.matches(passwordDto.getOldPassword(), user.getPassword())) {
+            response.setResponseCode("401");
+            response.setResponseMessage("Old password is incorrect");
+            return response;
+        }
+
+        // 2. Check if new password matches confirmation
+        if (!passwordDto.getNewPassword().equals(passwordDto.getConfirmPassword())) {
+            response.setResponseCode("400");
+            response.setResponseMessage("New password and confirmation password do not match");
+            return response;
+        }
+
+        // 3. Check if new password is same as old password
+        if (passwordEncoder.matches(passwordDto.getNewPassword(), user.getPassword())) {
+            response.setResponseCode("409");
+            response.setResponseMessage("New password cannot be the same as the old password");
+            return response;
+        }
+
+        // 4. Encode and save new password
+        user.setPassword(passwordEncoder.encode(passwordDto.getNewPassword()));
+        userRepository.save(user);
+
+        // 5. Return success
+        response.setResponseCode("200");
+        response.setResponseMessage("Password changed successfully");
+        return response;
     }
 
     @Override

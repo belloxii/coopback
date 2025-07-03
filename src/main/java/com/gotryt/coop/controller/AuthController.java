@@ -18,6 +18,8 @@ import com.gotryt.coop.exception.UserException;
 import com.gotryt.coop.model.User;
 import com.gotryt.coop.service.UserService;
 
+import jakarta.validation.Valid;
+
 
 @RestController
 @RequestMapping("/api/auth")
@@ -42,7 +44,7 @@ public class AuthController {
     }
 
     @PutMapping("/changepass")
-    public CoopResponse changePass(@RequestHeader("Authorization") String jwt, @RequestBody PasswordDto passwordDto) throws UserException {   
+    public CoopResponse changePass(@Valid @RequestHeader("Authorization") String jwt, @RequestBody PasswordDto passwordDto) throws UserException {   
         User user = userService.findUserProfileByJwt(jwt).getUser();                       
         return userService.changePassword(user, passwordDto);
     }

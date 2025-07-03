@@ -28,21 +28,29 @@ public class OTPServiceImpl implements OTPService {
     public CoopResponse sendOTP(OTPRequest otpRequest){
         Optional<User> existingUser = userRepository.findByEmail(otpRequest.getEmail());
 
-        if (otpRequest.getAction().equals("signup")) {
-            
+        String action = otpRequest.getAction();
 
-        if (existingUser.isPresent()) {
-            if ("NEW".equalsIgnoreCase(existingUser.get().getStatus())) {
-                return CoopResponse.builder()
-                    .responseCode("419")
-                    .responseMessage("Your account is pending admin approval, please wait or contact an admin.")
-                    .build();
-            }
+        if (!("signup".equals(action) || "forgetPass".equals(action) || "changePass".equals(action))) {
             return CoopResponse.builder()
                 .responseCode("419")
-                .responseMessage("There is already a registered user with this email, try to log in instaed.")
+                .responseMessage("Invalid action detected!")
                 .build();
         }
+        
+        if (otpRequest.getAction().equals("signup")) {
+            
+            if (existingUser.isPresent()) {
+                if ("NEW".equalsIgnoreCase(existingUser.get().getStatus())) {
+                    return CoopResponse.builder()
+                        .responseCode("419")
+                        .responseMessage("Your account is pending admin approval, please wait or contact an admin.")
+                        .build();
+                }
+                return CoopResponse.builder()
+                    .responseCode("419")
+                    .responseMessage("There is already a registered user with this email, try to log in instaed.")
+                    .build();
+            }
         }
 
         OTP existingOTP = otpRepository.findByEmail(otpRequest.getEmail());
@@ -74,26 +82,26 @@ public class OTPServiceImpl implements OTPService {
     public CoopResponse validateOTP(OTPRequest otpRequest) {
 
         OTP otp = otpRepository.findByEmail(otpRequest.getEmail());
+
         if (otp == null) {
             return CoopResponse.builder()
                 .responseCode("100")
                 .responseMessage("you did not send any OTP")
             .build();
         }
+        
+        if (!otp.getOtp().equals(otpRequest.getOtp())) {    
+            return CoopResponse.builder()
+                .responseCode("419")
+                .responseMessage("OTP is not correct")
+            .build();
+        }
 
         if (otp.getExpiredAt().isBefore(LocalDateTime.now())) {
             return CoopResponse.builder()
-                    .responseCode("419")
-                    .responseMessage("OTP expired")
-                .build();
-        }
-
-        if (!otp.getOtp().equals(otpRequest.getOtp())) {
-            
-            return CoopResponse.builder()
-                    .responseCode("419")
-                    .responseMessage("OTP is not correct")
-                .build();
+                .responseCode("419")
+                .responseMessage("OTP expired")
+            .build();
         }
 
         return CoopResponse.builder()
@@ -103,7 +111,5 @@ public class OTPServiceImpl implements OTPService {
                         .isOTPValid(true)
                     .build())
             .build();
-
     }
-   
 }

@@ -276,48 +276,64 @@ public AuthResponse createAccount(UserRequest userRequest) {
     public CoopResponse changePassword(User user, PasswordDto passwordDto) {
         CoopResponse response = new CoopResponse();
 
+        if (passwordDto.getOtp() == null || passwordDto.getOtp().isBlank()) {
+            return CoopResponse.builder()
+                .responseCode("419")
+                .responseMessage("invalid OTP detected!")
+            .build();
+        }
+
         OTP otp = otpRepository.findByEmail(user.getEmail());
         if (otp == null) {
             return CoopResponse.builder()
-                .responseCode("100")
+                .responseCode("419")
                 .responseMessage("you did not send any OTP")
+            .build();
+        }
+
+        if (!otp.getOtp().equals(passwordDto.getOtp())) {   
+            return CoopResponse.builder()
+                .responseCode("419")
+                .responseMessage("OTP is not correct")
             .build();
         }
 
         if (otp.getExpiredAt().isBefore(LocalDateTime.now())) {
             return CoopResponse.builder()
-                    .responseCode("419")
-                    .responseMessage("OTP expired")
-                .build();
-        }
-
-        if (!otp.getOtp().equals(passwordDto.getOtp())) {
-            
-            return CoopResponse.builder()
-                    .responseCode("419")
-                    .responseMessage("OTP is not correct")
-                .build();
+                .responseCode("419")
+                .responseMessage("OTP expired")
+            .build();
         }
 
         // 1. Validate old password
         if (!passwordEncoder.matches(passwordDto.getOldPassword(), user.getPassword())) {
-            response.setResponseCode("401");
+            response.setResponseCode("419");
             response.setResponseMessage("Old password is incorrect");
             return response;
         }
 
         // 2. Check if new password matches confirmation
         if (!passwordDto.getNewPassword().equals(passwordDto.getConfirmPassword())) {
-            response.setResponseCode("400");
+            response.setResponseCode("419");
             response.setResponseMessage("New password and confirmation password do not match");
             return response;
         }
 
         // 3. Check if new password is same as old password
         if (passwordEncoder.matches(passwordDto.getNewPassword(), user.getPassword())) {
-            response.setResponseCode("409");
+            response.setResponseCode("419");
             response.setResponseMessage("New password cannot be the same as the old password");
             return response;
+        }
+
+        // 3. Validate password strength
+        String newPassword = passwordDto.getNewPassword();
+        String passwordRegex = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$";
+        if (!newPassword.matches(passwordRegex)) {
+            return CoopResponse.builder()
+                .responseCode("419")
+                .responseMessage("Password must be at least 8 characters long and include uppercase, lowercase, number, and special character")
+                .build();
         }
 
         // 4. Encode and save new password
@@ -325,7 +341,7 @@ public AuthResponse createAccount(UserRequest userRequest) {
         userRepository.save(user);
 
         // 5. Return success
-        response.setResponseCode("200");
+        response.setResponseCode("100");
         response.setResponseMessage("Password changed successfully");
         return response;
     }
@@ -338,7 +354,7 @@ public AuthResponse createAccount(UserRequest userRequest) {
 
     String names = user.getFirstName() + " " + user.getLastName() + " " + user.getMiddleName();
 
-            // Send welcome email
+    // Send welcome email
     EmailDetails emailDetails = EmailDetails.builder()
         .recipient(user.getEmail())
         .subject("Account Activated")

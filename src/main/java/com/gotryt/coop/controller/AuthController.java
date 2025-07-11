@@ -1,6 +1,5 @@
 package com.gotryt.coop.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -19,14 +18,15 @@ import com.gotryt.coop.model.User;
 import com.gotryt.coop.service.UserService;
 
 import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
 
 
 @RestController
 @RequestMapping("/api/auth")
+@AllArgsConstructor
 public class AuthController {
 
-    @Autowired
-    UserService userService;
+    private final UserService userService;
 
     @PostMapping("/signup")
     public AuthResponse createAccount(@RequestBody UserRequest userRequest) {

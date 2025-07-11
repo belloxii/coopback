@@ -2,7 +2,6 @@ package com.gotryt.coop.controller;
 
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -16,16 +15,17 @@ import com.gotryt.coop.model.User;
 import com.gotryt.coop.repository.UserRepository;
 import com.gotryt.coop.service.UserService;
 
+import lombok.AllArgsConstructor;
+
 
 @RestController
 @RequestMapping("/api/user")
+@AllArgsConstructor
 public class UserController {
 
-    @Autowired
-    UserService userService;
+    private final UserService userService;
 
-    @Autowired
-    UserRepository userRepository;
+    private final UserRepository userRepository;
 
     @PutMapping("/update")
     public User updateUser(@RequestBody User user, @RequestHeader("Authorization") String jwt) throws UserException {
@@ -40,6 +40,11 @@ public class UserController {
     @GetMapping("/id/{userId}")
     public Optional<User> findUserById(@PathVariable Long userId, @RequestHeader("Authorization") String jwt) throws UserException {
         return userRepository.findById(userId);
+    }
+
+    @GetMapping("/phone/{phone}")
+    public Optional<User> findUserByPhone(@PathVariable String phone, @RequestHeader("Authorization") String jwt) throws UserException {
+        return userRepository.findByPhone(phone);
     }
 
 }

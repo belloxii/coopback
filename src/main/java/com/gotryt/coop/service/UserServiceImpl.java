@@ -41,7 +41,7 @@ public class UserServiceImpl implements UserService {
     private final JwtProvider jwtProvider;
     private final OTPRepository otpRepository;
 
-  @Override
+@Override
 public AuthResponse createAccount(UserRequest userRequest) {
 
     // Check if user with email already exists
@@ -57,6 +57,24 @@ public AuthResponse createAccount(UserRequest userRequest) {
         return AuthResponse.builder()
             .responseCode("419")
             .responseMessage("Email already exists!")
+            .jwt(null)
+            .build();
+    }
+
+    // ✅ Check if phone number already exists
+    if (userRepository.findByPhone(userRequest.getPhone()).isPresent()) {
+        return AuthResponse.builder()
+            .responseCode("419")
+            .responseMessage("Phone number already exists!")
+            .jwt(null)
+            .build();
+    }
+
+    // Check for duplicate memship ID if passed from frontend
+    if (userRequest.getMemship() != null && userRepository.existsByMemship(userRequest.getMemship())) {
+        return AuthResponse.builder()
+            .responseCode("419")
+            .responseMessage("Membership ID already exists!")
             .jwt(null)
             .build();
     }
@@ -195,13 +213,13 @@ public AuthResponse createAccount(UserRequest userRequest) {
             .build();
     }
 
-    @Override
-    public User findUserById(Long userId) throws UserException {
-        User user = userRepository.findById(userId).orElseThrow(
-            () -> new UserException("use not found with id: " + userId)
-        );
-        return user;
-    }
+    // @Override
+    // public User findUserById(Long userId) throws UserException {
+    //     User user = userRepository.findById(userId).orElseThrow(
+    //         () -> new UserException("use not found with id: " + userId)
+    //     );
+    //     return user;
+    // }
 
     @Override
     public User updateUser(User userData) throws UserException {

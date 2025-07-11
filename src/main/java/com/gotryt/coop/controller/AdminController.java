@@ -3,7 +3,6 @@ package com.gotryt.coop.controller;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -12,6 +11,9 @@ import com.gotryt.coop.exception.UserException;
 import com.gotryt.coop.model.User;
 import com.gotryt.coop.repository.UserRepository;
 import com.gotryt.coop.service.UserService;
+
+import lombok.AllArgsConstructor;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,13 +23,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 @RestController
 @RequestMapping("/api/admin")
+@AllArgsConstructor
 public class AdminController {
 
-    @Autowired
-    UserService userService;
+    private final UserService userService;
 
-    @Autowired
-    UserRepository userRepository;
+    private final UserRepository userRepository;
 
     @GetMapping("/users")
     public List<User> allUsers(@RequestHeader("Authorization") String jwt) {

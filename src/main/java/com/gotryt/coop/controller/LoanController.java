@@ -3,7 +3,6 @@ package com.gotryt.coop.controller;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,6 +23,8 @@ import com.gotryt.coop.service.LoanService;
 import com.gotryt.coop.service.RepayService;
 import com.gotryt.coop.service.UserService;
 
+import lombok.AllArgsConstructor;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -32,22 +33,18 @@ import org.springframework.web.bind.annotation.PutMapping;
 
 @RestController
 @RequestMapping("/api/loan")
+@AllArgsConstructor
 public class LoanController {
 
-    @Autowired
-    UserService userService;
+    private final UserService userService;
 
-    @Autowired
-    LoanService loanService;
+    private final LoanService loanService;
 
-    @Autowired
-    LoanRepository loanRepository;
+    private final LoanRepository loanRepository;
 
-    @Autowired
-    RepayRepository repayRepository;
+    private final RepayRepository repayRepository;
 
-    @Autowired
-    RepayService repayService;
+    private final RepayService repayService;
     
     @PostMapping("/apply")
     public LoanResponse applyLoan(@RequestHeader("Authorization") String jwt, @RequestBody LoanDto loanRequest) throws LoanException {

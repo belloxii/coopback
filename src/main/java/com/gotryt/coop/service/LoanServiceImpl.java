@@ -5,6 +5,8 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -28,22 +30,45 @@ public class LoanServiceImpl implements LoanService {
 
     @Override
     public LoanResponse applyLoan(User user, LoanDto loanRequest) throws LoanException {
-        
-        // Check if user has an outstanding loan balance
-        Optional<Loan> existingUnpaidLoan = loanRepository.findFirstByUserAndTypeAndStatusIn(
-                user,
-                loanRequest.getType(),
-                List.of("approved", "submitted") // or any status that indicates it's not completed/cleared
-            );
 
-            if (existingUnpaidLoan.isPresent() && existingUnpaidLoan.get().getBalance().compareTo(BigDecimal.ZERO) > 0) {
-                return LoanResponse.builder()
-                    .responseCode("419")
-                    .responseMessage("You have an outstanding " + loanRequest.getType() + " loan that must be repaid before applying again.")
-                    .build();
-            }
+        // Check if user has an outstanding loan of the same type
+        Optional<Loan> existingSameTypeLoan = loanRepository.findFirstByUserAndTypeAndStatusIn(
+            user,
+            loanRequest.getType(),
+            List.of("approved", "submitted")
+        );
 
-    
+        if (existingSameTypeLoan.isPresent() && existingSameTypeLoan.get().getBalance().compareTo(BigDecimal.ZERO) > 0) {
+            return LoanResponse.builder()
+                .responseCode("419")
+                .responseMessage("You have an outstanding " + loanRequest.getType() + " loan that must be repaid before applying again.")
+                .build();
+        }
+
+        // Get all active (approved/submitted) loans by user
+        List<Loan> activeLoans = loanRepository.findByUserAndStatusIn(
+            user,
+            List.of("approved", "submitted")
+        );
+
+        // Extract distinct loan types
+        Set<String> activeLoanTypes = activeLoans.stream()
+            .map(Loan::getType)
+            .collect(Collectors.toSet());
+
+        String newLoanType = loanRequest.getType().toLowerCase();
+
+        // Validate loan type combinations
+        if (
+            (activeLoanTypes.contains("real") && newLoanType.equals("material")) ||
+            (activeLoanTypes.contains("material") && newLoanType.equals("real"))
+        ) {
+            return LoanResponse.builder()
+                .responseCode("419")
+                .responseMessage("You cannot combine Material and Real loans at the same time.")
+                .build();
+        }
+
         // Create new loan application
         Loan applyLoan = Loan.builder()
             .amount(loanRequest.getAmount())
@@ -57,14 +82,15 @@ public class LoanServiceImpl implements LoanService {
             .purpose(loanRequest.getPurpose())
             .status("submitted")
             .build();
-    
+
         loanRepository.save(applyLoan);
+
         return LoanResponse.builder()
             .responseCode("100")
             .responseMessage("Loan application submitted.")
-            .build(); 
+            .build();
     }
-        
+
     @Override
     public Loan approveLoan(Long loanId) throws LoanException {
         // Fetch loan

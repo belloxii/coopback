@@ -4,18 +4,19 @@ import com.gotryt.coop.dto.PaystackInitializeRequest;
 import com.gotryt.coop.dto.PaystackInitializeResponse;
 import com.gotryt.coop.service.PaystackService;
 
+import lombok.AllArgsConstructor;
+
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/payments")
+@AllArgsConstructor
 public class PaystackController {
 
-    @Autowired
-    private PaystackService paystackService;
+    private final PaystackService paystackService;
 
     @PostMapping("/initialize")
     public ResponseEntity<PaystackInitializeResponse> initializePayment(@RequestBody PaystackInitializeRequest request) {

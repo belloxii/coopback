@@ -153,7 +153,7 @@ public SharesResponse declineWithdraw(Long shareId, Shares sharesDetails) throws
     Shares shareReversal = Shares.builder()
         .txnId(TxnIdGen.generateTransactionId())
         .type("credit")
-        .status("submitted")
+        .status("refunded")
         .amount(amount)
         .remark("Reversed: " + sharesDetails.getRemark())
         .balance(user.getSharesBalance())

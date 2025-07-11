@@ -8,7 +8,8 @@ import com.gotryt.coop.repository.SharesRepository;
 import com.gotryt.coop.service.SharesService;
 import com.gotryt.coop.service.UserService;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,16 +17,14 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/shares")
+@AllArgsConstructor
 public class SharesController {
 
-    @Autowired
-    UserService userService;
+    private final UserService userService;
 
-    @Autowired
-    SharesService sharesService;
+    private final SharesService sharesService;
 
-    @Autowired
-    SharesRepository sharesRepository;
+    private final SharesRepository sharesRepository;
 
     @PostMapping("/add")
     public ResponseEntity<Shares> addShares(@RequestHeader("Authorization") String jwt, @RequestBody Shares sharesDetails) throws SharesException {

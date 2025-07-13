@@ -22,33 +22,32 @@ public class SavingServiceImpl implements SavingService {
     private final SavingRepository savingRepository;
     private final UserRepository userRepository;
 
-@Override
-@Transactional
-public Saving saveNow(User user, BigDecimal amount) {
-    if (user == null || user.getPlan() == null || amount == null) {
-        throw new IllegalArgumentException("User, amount, or Monthly Plan cannot be null");
+    @Override
+    @Transactional
+    public Saving saveNow(User user) {
+        if (user == null || user.getPlan() == null) {
+            throw new IllegalArgumentException("User or Monthly Plan cannot be null");
+        }
+
+        // Ensure existing balance is not null
+        BigDecimal currentBalance = user.getSavingsBalance() != null ? user.getSavingsBalance() : BigDecimal.ZERO;
+        BigDecimal updatedBalance = currentBalance.add(user.getPlan());
+
+        // Update user's savings balance
+        user.setSavingsBalance(updatedBalance);
+        userRepository.save(user);
+
+        // Create and save new saving record
+        Saving newSaving = Saving.builder()
+            .amount(user.getPlan())
+            .txnId(TxnIdGen.generateTransactionId())
+            .balance(updatedBalance)
+            .status("submitted")
+            .user(user)
+            .build();
+
+        log.info("Saving recorded: User={}, Amount={}, New Balance={}", user.getId(), user.getPlan(), updatedBalance);
+
+        return savingRepository.save(newSaving);
     }
-
-    if (user.getPlan().compareTo(amount) != 0) {
-        throw new IllegalArgumentException("Invalid amount: must match user's plan");
-    }
-
-    BigDecimal currentBalance = user.getSavingsBalance() != null ? user.getSavingsBalance() : BigDecimal.ZERO;
-    BigDecimal updatedBalance = currentBalance.add(amount);
-
-    user.setSavingsBalance(updatedBalance);
-    userRepository.save(user);
-
-    Saving newSaving = Saving.builder()
-        .amount(amount)
-        .txnId(TxnIdGen.generateTransactionId())
-        .balance(updatedBalance)
-        .status("submitted")
-        .user(user)
-        .build();
-
-    log.info("Saving recorded: User={}, Amount={}, New Balance={}", user.getId(), amount, updatedBalance);
-
-    return savingRepository.save(newSaving);
-}
 }

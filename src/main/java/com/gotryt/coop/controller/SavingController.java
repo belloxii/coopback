@@ -11,14 +11,12 @@ import com.gotryt.coop.exception.SavingException;
 import com.gotryt.coop.model.Saving;
 import com.gotryt.coop.model.User;
 import com.gotryt.coop.repository.SavingRepository;
-import com.gotryt.coop.service.SavingService;
 import com.gotryt.coop.service.UserService;
 
 import lombok.AllArgsConstructor;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 
 
 @RestController
@@ -28,15 +26,13 @@ public class SavingController {
 
     private final UserService userService;
 
-    private final SavingService savingService;
-
     private final SavingRepository savingRepository;
     
-    @PostMapping("/save")
-    public Saving savevNow(@RequestHeader("Authorization") String jwt) throws SavingException {
-        User user = userService.findUserProfileByJwt(jwt).getUser();
-        return savingService.saveNow(user);
-    }
+    // @PostMapping("/save")
+    // public Saving savevNow(@RequestHeader("Authorization") String jwt) throws SavingException {
+    //     User user = userService.findUserProfileByJwt(jwt).getUser();
+    //     return savingService.saveNow(user);
+    // }
 
     @GetMapping("/all")
     public List<Saving> allsaSavings(@RequestHeader("Authorization") String jwt) throws SavingException {

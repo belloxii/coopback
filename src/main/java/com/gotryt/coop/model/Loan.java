@@ -53,6 +53,9 @@ public class Loan {
     private LocalDate EndDate;
     private String duration;
 
+    private User guarantor1;
+    private User guarantor2;
+
     @Builder.Default
     // private List<Repay> repays = new ArrayList<>();
     @OneToMany(mappedBy = "loan", cascade = CascadeType.ALL, orphanRemoval = true)

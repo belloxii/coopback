@@ -34,6 +34,7 @@ public class Repay {
     private BigDecimal balance;
     private String txnId;
     private String status;
+    private String channel;
 
     @ManyToOne
     // @JsonIgnore

@@ -34,6 +34,7 @@ public class Saving {
     private BigDecimal balance;
     private BigDecimal amount;
     private LocalDateTime month;
+    private String channel;
 
     @ManyToOne
     // @JsonIgnore

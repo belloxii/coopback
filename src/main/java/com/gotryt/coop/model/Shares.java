@@ -22,7 +22,8 @@ public class Shares {
     private String type;         
     private String status;   
     private String remark;   
-    private String accountDetails;   
+    private String accountDetails;
+    private String channel;
 
     private BigDecimal amount;
     private BigDecimal balance;

@@ -3,9 +3,6 @@ package com.gotryt.coop.dto;
 import lombok.Data;
 
 @Data
-// @AllArgsConstructor
-// @NoArgsConstructor
-// @Builder
 public class PaystackInitializeResponse {
     private boolean status;
     private String message;
@@ -16,6 +13,5 @@ public class PaystackInitializeResponse {
         private String authorization_url;
         private String access_code;
         private String reference;
-        // Getters and setters
     }
 }

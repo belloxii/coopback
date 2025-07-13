@@ -2,13 +2,12 @@ package com.gotryt.coop.dto;
 
 import lombok.Data;
 
+import java.util.Map;
+
 @Data
-// @AllArgsConstructor
-// @NoArgsConstructor
-// @Builder
 public class PaystackInitializeRequest {
     private String email;
     private int amount;
-    private String callback_url; // ADD THIS FIELD
+    private String callback_url;
+    private Map<String, Object> metadata;
 }
-

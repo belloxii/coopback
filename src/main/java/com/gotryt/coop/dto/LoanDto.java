@@ -21,9 +21,7 @@ public class LoanDto {
     private String purpose;
     private String remark;
     private String duration;
-    private String bankName;
-    private String aza;
-    private String accountName;
+    private String accountDetails;
     private String guarantor1;
     private String guarantor2;
 

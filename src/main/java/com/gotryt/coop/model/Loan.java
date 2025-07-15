@@ -46,15 +46,16 @@ public class Loan {
     // @JsonIgnore
     private User user;
 
-    private String bankName;
-    private String aza;
-    private String accountName;
+    @ManyToOne
+    private User guarantor1;
+
+    @ManyToOne
+    private User guarantor2;
+
+    private String accountDetails;
     private LocalDate startDate;
     private LocalDate EndDate;
     private String duration;
-
-    private User guarantor1;
-    private User guarantor2;
 
     @Builder.Default
     // private List<Repay> repays = new ArrayList<>();

@@ -19,6 +19,8 @@ import com.gotryt.coop.model.User;
 import com.gotryt.coop.repository.LoanRepository;
 import com.gotryt.coop.repository.UserRepository;
 
+import jakarta.transaction.Transactional;
+
 @Service
 public class LoanServiceImpl implements LoanService {
 
@@ -29,58 +31,58 @@ public class LoanServiceImpl implements LoanService {
     UserRepository userRepository;
 
     @Override
+    @Transactional
     public LoanResponse applyLoan(User user, LoanDto loanRequest) throws LoanException {
-
-        // Check if user has an outstanding loan of the same type
+        
+        // Check for existing same type loan
         Optional<Loan> existingSameTypeLoan = loanRepository.findFirstByUserAndTypeAndStatusIn(
             user,
             loanRequest.getType(),
             List.of("approved", "submitted")
         );
 
-        if (existingSameTypeLoan.isPresent() && existingSameTypeLoan.get().getBalance().compareTo(BigDecimal.ZERO) > 0) {
+        if (existingSameTypeLoan.isPresent()) {
             return LoanResponse.builder()
                 .responseCode("419")
-                .responseMessage("You have an outstanding " + loanRequest.getType() + " loan that must be repaid before applying again.")
+                .responseMessage("You already have an active " + loanRequest.getType() + " loan.")
                 .build();
         }
 
-        // Get all active (approved/submitted) loans by user
-        List<Loan> activeLoans = loanRepository.findByUserAndStatusIn(
-            user,
-            List.of("approved", "submitted")
-        );
-
-        // Extract distinct loan types
+        // Check if combining real + material
+        List<Loan> activeLoans = loanRepository.findByUserAndStatusIn(user, List.of("approved", "submitted"));
         Set<String> activeLoanTypes = activeLoans.stream()
-            .map(Loan::getType)
+            .map(l -> l.getType().toLowerCase())
             .collect(Collectors.toSet());
 
         String newLoanType = loanRequest.getType().toLowerCase();
-
-        // Validate loan type combinations
-        if (
-            (activeLoanTypes.contains("real") && newLoanType.equals("material")) ||
-            (activeLoanTypes.contains("material") && newLoanType.equals("real"))
-        ) {
+        if ((activeLoanTypes.contains("real") && newLoanType.equals("material")) ||
+            (activeLoanTypes.contains("material") && newLoanType.equals("real"))) {
             return LoanResponse.builder()
                 .responseCode("419")
                 .responseMessage("You cannot combine Material and Real loans at the same time.")
                 .build();
         }
 
-        // Create new loan application
+        // ✅ Validate and retrieve guarantor1 user
+        User guarantor1 = userRepository.findByPhone(loanRequest.getGuarantor1())
+            .orElseThrow(() -> new LoanException("The owner of the phone number " + loanRequest.getGuarantor1() + " is not a cooperator."));
+
+        // ✅ Validate and retrieve guarantor2 user
+        User guarantor2 = userRepository.findByPhone(loanRequest.getGuarantor2())
+            .orElseThrow(() -> new LoanException("The owner of the phone number " + loanRequest.getGuarantor2() + " is not a cooperator."));
+
+        // Create loan
         Loan applyLoan = Loan.builder()
             .amount(loanRequest.getAmount())
             .balance(BigDecimal.ZERO)
             .type(loanRequest.getType())
             .duration(loanRequest.getDuration())
             .user(user)
-            .bankName(loanRequest.getBankName())
-            .aza(loanRequest.getAza())
-            .accountName(loanRequest.getAccountName())
+            .accountDetails(loanRequest.getAccountDetails())
             .purpose(loanRequest.getPurpose())
             .status("submitted")
+            .guarantor1(guarantor1)
+            .guarantor2(guarantor2)
             .build();
 
         loanRepository.save(applyLoan);
@@ -90,8 +92,8 @@ public class LoanServiceImpl implements LoanService {
             .responseMessage("Loan application submitted.")
             .build();
     }
-
-    @Override
+    
+   @Override
     public Loan approveLoan(Long loanId) throws LoanException {
         // Fetch loan
         Loan applyLoan = loanRepository.findById(loanId)

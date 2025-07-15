@@ -42,11 +42,25 @@ public class RepayServiceImpl implements RepayService {
             .orElseThrow(() -> new LoanException("Loan not found"));
 
         BigDecimal repaymentAmount = repayDto.getAmount();
-        BigDecimal remainingBalance = loan.getBalance().subtract(repaymentAmount);
+        BigDecimal repayAmount = loan.getRepayAmount(); // Monthly repayment
+        BigDecimal currentBalance = loan.getBalance();
 
-        if (remainingBalance.compareTo(BigDecimal.ZERO) < 0) {
-            throw new LoanException("Repayment amount exceeds outstanding loan balance");
+        if (repaymentAmount == null || repayAmount == null || repayAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RepayException("Invalid repayment amount or loan repayment plan.");
         }
+
+        // ✅ Check 1: Repayment must be a multiple of the loan's repayAmount
+        if (repaymentAmount.remainder(repayAmount).compareTo(BigDecimal.ZERO) != 0) {
+            throw new RepayException("Repayment must be in multiples of ₦" + repayAmount.toPlainString());
+        }
+
+        // ✅ Check 2: Repayment must not exceed loan balance
+        if (repaymentAmount.compareTo(currentBalance) > 0) {
+            throw new RepayException("Repayment amount exceeds outstanding loan balance.");
+        }
+
+        // Calculate remaining balance
+        BigDecimal remainingBalance = currentBalance.subtract(repaymentAmount);
 
         // Create repayment transaction
         Repay repayLoan = Repay.builder()
@@ -56,7 +70,7 @@ public class RepayServiceImpl implements RepayService {
             .loan(loan)
             .parentLoanId(loan.getId())
             .loanType(loan.getType())
-            .status("submitted")
+            .status("approved")
             .user(user)
             .build();
 
@@ -70,9 +84,9 @@ public class RepayServiceImpl implements RepayService {
 
         loanRepository.save(loan);
 
-        // ✅ Subtract repayment amount from total loan balance
+        // Update user's overall loan balance
         BigDecimal updatedLoanBalance = user.getLoanBalance().subtract(repaymentAmount);
-        user.setLoanBalance(updatedLoanBalance.max(BigDecimal.ZERO)); // Avoid negative
+        user.setLoanBalance(updatedLoanBalance.max(BigDecimal.ZERO));
 
         userRepository.save(user);
 

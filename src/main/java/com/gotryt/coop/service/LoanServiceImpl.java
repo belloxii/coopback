@@ -63,11 +63,28 @@ public class LoanServiceImpl implements LoanService {
                 .build();
         }
 
-        // ✅ Validate and retrieve guarantor1 user
+        // Prevent using same phone number for both guarantors
+        if (loanRequest.getGuarantor1().equals(loanRequest.getGuarantor2())) {
+            return LoanResponse.builder()
+                .responseCode("419")
+                .responseMessage("You cannot use the same phone number for both guarantors.")
+                .build();
+        }
+
+        // Prevent user from using self as guarantor
+        String applicantPhone = user.getPhone();
+        if (applicantPhone.equals(loanRequest.getGuarantor1()) || applicantPhone.equals(loanRequest.getGuarantor2())) {
+            return LoanResponse.builder()
+                .responseCode("419")
+                .responseMessage("You cannot use your own phone number as a guarantor.")
+                .build();
+        }
+
+        // Validate and retrieve guarantor 1
         User guarantor1 = userRepository.findByPhone(loanRequest.getGuarantor1())
             .orElseThrow(() -> new LoanException("The owner of the phone number " + loanRequest.getGuarantor1() + " is not a cooperator."));
 
-        // ✅ Validate and retrieve guarantor2 user
+        // Validate and retrieve guarantor 2
         User guarantor2 = userRepository.findByPhone(loanRequest.getGuarantor2())
             .orElseThrow(() -> new LoanException("The owner of the phone number " + loanRequest.getGuarantor2() + " is not a cooperator."));
 
@@ -92,7 +109,7 @@ public class LoanServiceImpl implements LoanService {
             .responseMessage("Loan application submitted.")
             .build();
     }
-    
+
    @Override
     public Loan approveLoan(Long loanId) throws LoanException {
         // Fetch loan

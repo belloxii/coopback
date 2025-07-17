@@ -1,120 +1,308 @@
-# COOPR8 API Documentation
+# COOPR8 API Documentation v1.0
 
 ## Base Information
-**Base URL**: `https://coopr8.onrender.com/api/v1`  
-**Authentication**: JWT Bearer Token  
-**Default Headers**:  
-`Content-Type: application/json`  
-`Authorization: Bearer <token>`  
+**Base URL:** `https://coopr8.onrender.com/api/v1`
 
-## Authentication Endpoints
-**Register New User**  
-`POST /auth/signup`  
-Request:
+**Authentication:** JWT Bearer Token
+
+**Default Headers:**
+```
+Content-Type: application/json
+Authorization: Bearer <token>
+```
+
+## Table of Contents
+- [Authentication](#authentication)
+- [Admin](#admin)
+- [Loans](#loans)
+- [OTP](#otp)
+- [Payments](#payments)
+- [Savings](#savings)
+- [Shares](#shares)
+- [User](#user)
+- [Webhooks](#webhooks)
+
+---
+
+## Authentication
+
+### Register New User
+**Method:** POST  
+**Path:** `/auth/signup`
+
+**Request Body:**
 ```json
-{"firstName":"string","lastName":"string","email":"string","password":"string","membershipType":"string"}
-Response:
+{
+  "firstName": "string",
+  "lastName": "string",
+  "email": "string",
+  "password": "string",
+  "membershipType": "string"
+}
+```
 
-json
-{"token":"string","message":"string","user":{"id":"string","firstName":"string","lastName":"string","email":"string","role":"string"}}
-User Login
-POST /auth/login
-Request:
+**Success Response:**
+```json
+{
+  "token": "string",
+  "message": "string",
+  "user": {
+    "id": "string",
+    "firstName": "string",
+    "lastName": "string",
+    "email": "string",
+    "role": "string"
+  }
+}
+```
 
-json
-{"email":"string","password":"string"}
-Response: Same as registration
+### User Login
+**Method:** POST  
+**Path:** `/auth/login`
 
-Get User Profile
-GET /auth/profile
-Response: Returns authenticated user's profile
+**Request Body:**
+```json
+{
+  "email": "string",
+  "password": "string"
+}
+```
 
-Change Password
-PUT /auth/changepass
-Request:
+**Success Response:** Same as registration
 
-json
-{"currentPassword":"string","newPassword":"string","confirmPassword":"string"}
-Admin Endpoints
-Get All Users
-GET /admin/users
-Response:
+### Get User Profile
+**Method:** GET  
+**Path:** `/auth/profile`
 
-json
-[{"id":"string","firstName":"string","lastName":"string","email":"string","status":"string"}]
-Find User by ID
-GET /admin/user/id/{userId}
-Response: Single user details
+**Response:** Returns authenticated user's profile
 
-Activate User
-PUT /admin/user/{userId}/activate
-Response: Activated user object
+### Change Password
+**Method:** PUT  
+**Path:** `/auth/changepass`
 
-Loan Endpoints
-Apply for Loan
-POST /loan/apply
-Request:
+**Request Body:**
+```json
+{
+  "currentPassword": "string",
+  "newPassword": "string",
+  "confirmPassword": "string"
+}
+```
 
-json
-{"amount":number,"purpose":"string","durationMonths":number}
-Response:
+---
 
-json
-{"loan":{"id":number,"amount":number,"status":"string"},"message":"string"}
-Get User Loans
-GET /loan/myloans
-Response:
+## Admin
 
-json
-[{"id":number,"amount":number,"status":"string","createdAt":"timestamp"}]
-OTP Endpoints
-Send OTP
-POST /otp/sendOTP
-Request:
+### Get All Users
+**Method:** GET  
+**Path:** `/admin/users`
 
-json
-{"email":"string","purpose":"string"}
-Payment Endpoints
-Initialize Payment
-POST /payments/initialize
-Request:
+**Response:** List of all users
 
-json
-{"amount":number,"email":"string"}
-Savings Endpoints
-Get User Savings
-GET /savings/mysavings
-Response:
+### Find User by ID
+**Method:** GET  
+**Path:** `/admin/user/id/{userId}`
 
-json
-[{"id":number,"amount":number,"date":"timestamp"}]
-Error Handling
-Common Status Codes:
-400 - Bad Request
-401 - Unauthorized
-403 - Forbidden
-404 - Not Found
-500 - Server Error
+**Response:** Single user details
 
-Example Error:
+### Find User by Membership Number
+**Method:** GET  
+**Path:** `/admin/user/memship/{memship}`
 
-json
-{"timestamp":"ISO8601","status":number,"error":"string","message":"string","path":"string"}
-Development
-bash
-git clone https://github.com/your-repo/coopr8.git
-cd coopr8
-mvn install
-License
-MIT License
+**Response:** Single user details
 
-text
+### Get New Users
+**Method:** GET  
+**Path:** `/admin/users/new`
 
-This version:
-1. Has all content in one continuous block
-2. Uses compact formatting for easy copying
-3. Maintains all essential documentation elements
-4. Includes proper markdown formatting
-5. Preserves all code blocks and examples
+**Response:** List of unactivated users
 
-Simply copy this entire block and paste it directly into your GitHub README.md file.
+### Activate User
+**Method:** PUT  
+**Path:** `/admin/user/{userId}/activate`
+
+**Response:** Activated user object
+
+### Bulk Create Users
+**Method:** POST  
+**Path:** `/admin/users/multi`
+
+**Request Body:** Array of user objects  
+**Response:** List of created users
+
+---
+
+## Loans
+
+### Apply for Loan
+**Method:** POST  
+**Path:** `/loan/apply`
+
+**Request Body:**
+```json
+{
+  "amount": "number",
+  "purpose": "string",
+  "durationMonths": "integer"
+}
+```
+
+### Get All Loans (Admin)
+**Method:** GET  
+**Path:** `/loan/all`
+
+**Response:** List of all loans
+
+### Get User Loans
+**Method:** GET  
+**Path:** `/loan/myloans`
+
+**Response:** List of authenticated user's loans
+
+### Approve Loan (Admin)
+**Method:** PUT  
+**Path:** `/loan/{loanId}/approve`
+
+**Response:** Approved loan object
+
+### Make Repayment
+**Method:** POST  
+**Path:** `/loan/{loanId}/repay`
+
+**Request Body:**
+```json
+{
+  "amount": "number",
+  "paymentMethod": "string"
+}
+```
+
+---
+
+## OTP
+
+### Send OTP
+**Method:** POST  
+**Path:** `/otp/sendOTP`
+
+**Request Body:**
+```json
+{
+  "email": "string",
+  "purpose": "string"
+}
+```
+
+### Validate OTP
+**Method:** POST  
+**Path:** `/otp/validateOTP`
+
+**Request Body:**
+```json
+{
+  "email": "string",
+  "otp": "string"
+}
+```
+
+---
+
+## Payments
+
+### Initialize Payment
+**Method:** POST  
+**Path:** `/payments/initialize`
+
+**Request Body:** Paystack initialization request  
+**Response:** Paystack payment link
+
+### Verify Transaction
+**Method:** GET  
+**Path:** `/payments/verify/{reference}`
+
+**Response:** Transaction verification details
+
+---
+
+## Savings
+
+### Get All Savings (Admin)
+**Method:** GET  
+**Path:** `/savings/all`
+
+**Response:** List of all savings
+
+### Get User Savings
+**Method:** GET  
+**Path:** `/savings/mysavings`
+
+**Response:** List of authenticated user's savings
+
+### Get Last Saving
+**Method:** GET  
+**Path:** `/savings/last`
+
+**Response:** User's most recent saving
+
+---
+
+## Shares
+
+### Add Shares
+**Method:** POST  
+**Path:** `/shares/add`
+
+**Request Body:** Shares details  
+**Response:** Created shares record
+
+### Withdraw Shares
+**Method:** POST  
+**Path:** `/shares/withdraw`
+
+**Request Body:** Shares withdrawal details  
+**Response:** Withdrawal status
+
+### Approve Withdrawal (Admin)
+**Method:** PUT  
+**Path:** `/shares/{shareId}/approve`
+
+**Response:** Approved withdrawal record
+
+---
+
+## User
+
+### Update User Profile
+**Method:** PUT  
+**Path:** `/user/update`
+
+**Request Body:** User details  
+**Response:** Updated user object
+
+### Find User by Phone
+**Method:** GET  
+**Path:** `/user/phone/{phone}`
+
+**Response:** User details
+
+---
+
+## Webhooks
+
+### Paystack Webhook
+**Method:** POST  
+**Path:** `/webhook/paystack`
+
+**Request Body:** Paystack webhook payload  
+**Response:** Processing status
+
+---
+
+## Error Responses
+
+All endpoints may return:
+- `401 Unauthorized` - Invalid/missing JWT
+- `403 Forbidden` - Insufficient permissions
+- `400 Bad Request` - Invalid input data
+- `404 Not Found` - Resource not found
+- `500 Internal Server Error` - Server error

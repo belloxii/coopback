@@ -2,7 +2,6 @@ package com.gotryt.coop.service;
 
 import com.gotryt.coop.dto.UserRequest;
 import com.gotryt.coop.exception.UserException;
-import com.gotryt.coop.model.NotificationType;
 import com.gotryt.coop.model.OTP;
 import com.gotryt.coop.model.Role;
 import com.gotryt.coop.model.User;

@@ -22,5 +22,6 @@ public class OTP {
     
     @CreationTimestamp
     private LocalDateTime createdAt;      
-    private LocalDateTime expiredAt;      
+    private LocalDateTime expiredAt;
+          
 }

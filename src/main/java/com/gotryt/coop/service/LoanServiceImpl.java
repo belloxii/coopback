@@ -3,37 +3,40 @@ package com.gotryt.coop.service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.gotryt.coop.dto.LoanDto;
 import com.gotryt.coop.dto.LoanResponse;
 import com.gotryt.coop.exception.LoanException;
 import com.gotryt.coop.model.Loan;
+import com.gotryt.coop.model.Notification;
+import com.gotryt.coop.model.NotificationType;
 import com.gotryt.coop.model.User;
 import com.gotryt.coop.repository.LoanRepository;
+import com.gotryt.coop.repository.NotificationRepository;
 import com.gotryt.coop.repository.UserRepository;
 
 import jakarta.transaction.Transactional;
+import lombok.AllArgsConstructor;
 
 @Service
+@AllArgsConstructor
 public class LoanServiceImpl implements LoanService {
 
-    @Autowired
-    LoanRepository loanRepository;
-
-    @Autowired
-    UserRepository userRepository;
+   private final LoanRepository loanRepository;
+   private final UserRepository userRepository;
+   private final NotificationRepository notificationRepository;
 
     @Override
     @Transactional
     public LoanResponse applyLoan(User user, LoanDto loanRequest) throws LoanException {
-        
+
         // Check for existing same type loan
         Optional<Loan> existingSameTypeLoan = loanRepository.findFirstByUserAndTypeAndStatusIn(
             user,
@@ -44,7 +47,7 @@ public class LoanServiceImpl implements LoanService {
         if (existingSameTypeLoan.isPresent()) {
             return LoanResponse.builder()
                 .responseCode("419")
-                .responseMessage("You already have an active " + loanRequest.getType() + " loan.")
+                .responseMessage("You already applied for a " + loanRequest.getType() + " loan.")
                 .build();
         }
 
@@ -80,11 +83,10 @@ public class LoanServiceImpl implements LoanService {
                 .build();
         }
 
-        // Validate and retrieve guarantor 1
+        // Validate and retrieve guarantors
         User guarantor1 = userRepository.findByPhone(loanRequest.getGuarantor1())
             .orElseThrow(() -> new LoanException("The owner of the phone number " + loanRequest.getGuarantor1() + " is not a cooperator."));
 
-        // Validate and retrieve guarantor 2
         User guarantor2 = userRepository.findByPhone(loanRequest.getGuarantor2())
             .orElseThrow(() -> new LoanException("The owner of the phone number " + loanRequest.getGuarantor2() + " is not a cooperator."));
 
@@ -104,13 +106,35 @@ public class LoanServiceImpl implements LoanService {
 
         loanRepository.save(applyLoan);
 
+        String fullName = 
+            (user.getFirstName() != null ? user.getFirstName() + " " : "") +
+            (user.getMiddleName() != null ? user.getMiddleName() + " " : "") +
+            (user.getLastName() != null ? user.getLastName() : "");
+
+        // Send notifications AFTER loan is saved
+        notificationRepository.save(Notification.builder()
+            .recipient(guarantor1)
+            .type(NotificationType.GUARANTOR_REQUEST)
+            .referenceId(applyLoan.getId()) // use loan ID as reference
+            .message("You have been selected as a guarantor for a loan by " + fullName)
+            .timestamp(LocalDateTime.now())
+            .build());
+
+        notificationRepository.save(Notification.builder()
+            .recipient(guarantor2)
+            .type(NotificationType.GUARANTOR_REQUEST)
+            .referenceId(applyLoan.getId()) // use loan ID as reference
+            .message("You have been selected as a guarantor for a loan by " + fullName)
+            .timestamp(LocalDateTime.now())
+            .build());
+
         return LoanResponse.builder()
             .responseCode("100")
             .responseMessage("Loan application submitted.")
             .build();
     }
 
-   @Override
+    @Override
     public Loan approveLoan(Long loanId) throws LoanException {
         // Fetch loan
         Loan applyLoan = loanRepository.findById(loanId)
@@ -151,6 +175,13 @@ public class LoanServiceImpl implements LoanService {
         user.setLoanBalance(user.getLoanBalance().add(applyLoan.getAmount()));
         userRepository.save(user);
 
+        notificationRepository.save(Notification.builder()
+            .recipient(applyLoan.getUser())
+            .type(NotificationType.LOAN_APPROVED)
+            .referenceId(applyLoan.getId())
+            .message("Your" + applyLoan.getType() + " loan of ₦" + applyLoan.getAmount() + " has been approved.")
+            .build());
+
         // Save and return updated loan
         return loanRepository.save(applyLoan);
     }
@@ -163,11 +194,17 @@ public class LoanServiceImpl implements LoanService {
         // Set loan details
         applyLoan.setStatus("declined");
         applyLoan.setRemark(loanDto.getRemark());
-
    
         User user = applyLoan.getUser();
         user.setLoanBalance(user.getLoanBalance().add(applyLoan.getAmount()));
         userRepository.save(user);
+
+        notificationRepository.save(Notification.builder()
+            .recipient(applyLoan.getUser())
+            .type(NotificationType.LOAN_DECLINED)
+            .referenceId(applyLoan.getId())
+            .message("Your" + applyLoan.getType() + " loan of ₦" + applyLoan.getAmount() + " has been declined.")
+            .build());
 
         return loanRepository.save(applyLoan);
     }

@@ -11,5 +11,4 @@ public interface RepayRepository extends JpaRepository<Repay, Long> {
 
     List<Repay> findByUser_Id(Long userId);
 
-    
 }

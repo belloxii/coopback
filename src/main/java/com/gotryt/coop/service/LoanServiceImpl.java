@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+import com.gotryt.coop.dto.EmailDetails;
 import com.gotryt.coop.dto.LoanDto;
 import com.gotryt.coop.dto.LoanResponse;
 import com.gotryt.coop.exception.LoanException;
@@ -29,9 +30,10 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class LoanServiceImpl implements LoanService {
 
-   private final LoanRepository loanRepository;
-   private final UserRepository userRepository;
-   private final NotificationRepository notificationRepository;
+    private final LoanRepository loanRepository;
+    private final UserRepository userRepository;
+    private final NotificationRepository notificationRepository;
+    private final EmailService emailService;
 
     @Override
     @Transactional
@@ -182,6 +184,14 @@ public class LoanServiceImpl implements LoanService {
             .message("Your" + applyLoan.getType() + " loan of ₦" + applyLoan.getAmount() + " has been approved.")
             .build());
 
+        EmailDetails emailDetails = EmailDetails.builder()
+        .recipient(user.getEmail())
+        .subject("Loan Approved")
+        .message("Congratulations, your" + applyLoan.getType() + " loan of ₦" + applyLoan.getAmount() + " has been approved. Login to the app to view more details.")
+        .build();
+
+        emailService.sendEmail(emailDetails);
+
         // Save and return updated loan
         return loanRepository.save(applyLoan);
     }
@@ -205,6 +215,14 @@ public class LoanServiceImpl implements LoanService {
             .referenceId(applyLoan.getId())
             .message("Your" + applyLoan.getType() + " loan of ₦" + applyLoan.getAmount() + " has been declined.")
             .build());
+    
+        EmailDetails emailDetails = EmailDetails.builder()
+        .recipient(user.getEmail())
+        .subject("Loan Declined")
+        .message("This is to notify you that your" + applyLoan.getType() + " loan of ₦" + applyLoan.getAmount() + " was declined. Login to the app to view more details.")
+        .build();
+
+        emailService.sendEmail(emailDetails);
 
         return loanRepository.save(applyLoan);
     }

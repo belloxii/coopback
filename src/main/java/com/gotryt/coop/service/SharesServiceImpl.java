@@ -1,9 +1,13 @@
 package com.gotryt.coop.service;
 
+import com.gotryt.coop.dto.EmailDetails;
 import com.gotryt.coop.dto.SharesResponse;
 import com.gotryt.coop.exception.SharesException;
+import com.gotryt.coop.model.Notification;
+import com.gotryt.coop.model.NotificationType;
 import com.gotryt.coop.model.Shares;
 import com.gotryt.coop.model.User;
+import com.gotryt.coop.repository.NotificationRepository;
 import com.gotryt.coop.repository.SharesRepository;
 import com.gotryt.coop.repository.UserRepository;
 import com.gotryt.coop.utils.TxnIdGen;
@@ -20,7 +24,9 @@ public class SharesServiceImpl implements SharesService {
 
     private final SharesRepository sharesRepository;
     private final UserRepository userRepository;
-
+    private final NotificationRepository notificationRepository;
+    private final EmailService emailService;
+    
     @Override
     public Shares addShares(User user, Shares sharesDetails) {
         BigDecimal latestBalance = user.getSharesBalance() != null ? user.getSharesBalance() : BigDecimal.ZERO;
@@ -112,6 +118,21 @@ public SharesResponse approveWithdraw(Long shareId) throws SharesException {
     share.setStatus("approved");
     sharesRepository.save(share);
 
+        notificationRepository.save(Notification.builder()
+            .recipient(share.getUser())
+            .type(NotificationType.SHARES_APPROVED)
+            .referenceId(share.getId())
+            .message("Your share withdrawal of ₦" + share.getAmount() + " has been approved.")
+            .build());
+    
+        EmailDetails emailDetails = EmailDetails.builder()
+            .recipient(share.getUser().getEmail())
+            .subject("Shares Withdrawal Declined")
+            .message("Congratulations, your share withdrawal of ₦" + share.getAmount() + " has been approved. Login to the app to view more details.")
+            .build();
+
+        emailService.sendEmail(emailDetails);
+
     return SharesResponse.builder()
         .responseCode("100")
         .responseMessage("Withdrawal has been approved successfully...")
@@ -162,6 +183,21 @@ public SharesResponse declineWithdraw(Long shareId, Shares sharesDetails) throws
         .build();
 
     sharesRepository.save(shareReversal);
+
+        notificationRepository.save(Notification.builder()
+            .recipient(share.getUser())
+            .type(NotificationType.SHARES_DECLINED)
+            .referenceId(share.getId())
+            .message("Your share withdrawal of ₦" + share.getAmount() + " has been declined.")
+            .build());
+    
+        EmailDetails emailDetails = EmailDetails.builder()
+            .recipient(share.getUser().getEmail())
+            .subject("Shares Withdrawal Declined")
+            .message("This is to notify you that your share withdrawal of ₦" + share.getAmount() + " was declined and balance has been added back to your account. Login to the app to view more details.")
+            .build();
+
+        emailService.sendEmail(emailDetails);
 
     return SharesResponse.builder()
         .responseCode("100")

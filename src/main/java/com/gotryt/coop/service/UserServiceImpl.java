@@ -2,6 +2,7 @@ package com.gotryt.coop.service;
 
 import com.gotryt.coop.dto.UserRequest;
 import com.gotryt.coop.exception.UserException;
+import com.gotryt.coop.model.NotificationType;
 import com.gotryt.coop.model.OTP;
 import com.gotryt.coop.model.Role;
 import com.gotryt.coop.model.User;
@@ -361,6 +362,15 @@ public AuthResponse createAccount(UserRequest userRequest) {
         // 5. Return success
         response.setResponseCode("100");
         response.setResponseMessage("Password changed successfully");
+    
+        EmailDetails emailDetails = EmailDetails.builder()
+            .recipient(user.getEmail())
+            .subject("Passwor Change Notification")
+            .message("This is to notify you that you have just changed your COOPR8 App password. \nIf it was not you, kindly contact an ADMIN immediately!")
+            .build();
+
+        emailService.sendEmail(emailDetails);
+
         return response;
     }
 

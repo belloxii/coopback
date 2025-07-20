@@ -19,6 +19,9 @@ public class WebhookController {
     @PostMapping("/paystack")
     public ResponseEntity<String> receivePaystackWebhook(@RequestBody Map<String, Object> payload) {
         log.info("🔔 Received Paystack Webhook");
+        log.info("🔔 log Full Payload: " + payload);
+        System.out.println("Event: " + payload.get("event"));
+        System.out.println("Full Payload: " + payload);
 
         try {
             paystackService.handleWebhook(payload);

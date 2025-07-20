@@ -16,7 +16,6 @@ import lombok.NoArgsConstructor;
 public class LoanDto {
 
     private BigDecimal amount;
-    private BigDecimal balance;
     private String type;
     private String purpose;
     private String remark;

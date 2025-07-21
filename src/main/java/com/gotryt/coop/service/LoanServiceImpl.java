@@ -64,7 +64,7 @@ public class LoanServiceImpl implements LoanService {
             (activeLoanTypes.contains("material") && newLoanType.equals("real"))) {
             return LoanResponse.builder()
                 .responseCode("419")
-                .responseMessage("You cannot combine Material and Real loans at the same time.")
+                .responseMessage("You cannot combine Material and Real loans at the same time❌.")
                 .build();
         }
 
@@ -72,7 +72,7 @@ public class LoanServiceImpl implements LoanService {
         if (loanRequest.getGuarantor1().equals(loanRequest.getGuarantor2())) {
             return LoanResponse.builder()
                 .responseCode("419")
-                .responseMessage("You cannot use the same phone number for both guarantors.")
+                .responseMessage("You cannot use the same phone number for both guarantors❌.")
                 .build();
         }
 
@@ -81,16 +81,16 @@ public class LoanServiceImpl implements LoanService {
         if (applicantPhone.equals(loanRequest.getGuarantor1()) || applicantPhone.equals(loanRequest.getGuarantor2())) {
             return LoanResponse.builder()
                 .responseCode("419")
-                .responseMessage("You cannot use your own phone number as a guarantor.")
+                .responseMessage("You cannot use your own phone number as a guarantor❌.")
                 .build();
         }
 
         // Validate and retrieve guarantors
         User guarantor1 = userRepository.findByPhone(loanRequest.getGuarantor1())
-            .orElseThrow(() -> new LoanException("The owner of the phone number " + loanRequest.getGuarantor1() + " is not a cooperator."));
+            .orElseThrow(() -> new LoanException("The owner of the phone number " + loanRequest.getGuarantor1() + " is not a cooperator❌."));
 
         User guarantor2 = userRepository.findByPhone(loanRequest.getGuarantor2())
-            .orElseThrow(() -> new LoanException("The owner of the phone number " + loanRequest.getGuarantor2() + " is not a cooperator."));
+            .orElseThrow(() -> new LoanException("The owner of the phone number " + loanRequest.getGuarantor2() + " is not a cooperator❌."));
 
         // Create loan
         Loan applyLoan = Loan.builder()
@@ -132,69 +132,64 @@ public class LoanServiceImpl implements LoanService {
 
         return LoanResponse.builder()
             .responseCode("100")
-            .responseMessage("Loan application submitted.")
+            .responseMessage("Loan application submitted✅.")
             .build();
     }
 
-    @Override
-    public Loan approveLoan(Long loanId) throws LoanException {
-        // Fetch loan
-        Loan applyLoan = loanRepository.findById(loanId)
-            .orElseThrow(() -> new LoanException("Loan not found"));
+@Override
+public Loan approveLoan(Long loanId) throws LoanException {
+    Loan applyLoan = loanRepository.findById(loanId)
+        .orElseThrow(() -> new LoanException("Loan not found"));
 
-        // Validate and parse duration
-        String durationStr = applyLoan.getDuration();
-        if (durationStr == null || durationStr.trim().isEmpty()) {
-            throw new LoanException("Loan duration is missing or invalid.");
-        }
+    String durationStr = applyLoan.getDuration();
+    if (durationStr == null || durationStr.trim().isEmpty()) {
+        throw new LoanException("Loan duration is missing or invalid.");
+    }
 
-        long durationInMonths;
-        try {
-            durationInMonths = Long.parseLong(durationStr.trim());
-        } catch (NumberFormatException e) {
-            throw new LoanException("Loan duration must be a valid numeric value.");
-        }
+    long durationInMonths;
+    try {
+        durationInMonths = Long.parseLong(durationStr.trim());
+    } catch (NumberFormatException e) {
+        throw new LoanException("Loan duration must be a valid numeric value.");
+    }
 
-        if (durationInMonths <= 0) {
-            throw new LoanException("Loan duration must be greater than zero.");
-        }
+    if (durationInMonths <= 0) {
+        throw new LoanException("Loan duration must be greater than zero.");
+    }
 
-        // Set loan status and dates
-        LocalDate todaysDate = LocalDate.now();
-        applyLoan.setStatus("approved");
-        applyLoan.setBalance(applyLoan.getAmount());
-        applyLoan.setStartDate(todaysDate);
-        applyLoan.setEndDate(todaysDate.plusMonths(durationInMonths));
+    LocalDate today = LocalDate.now();
+    applyLoan.setStatus("approved");
+    applyLoan.setStartDate(today);
+    applyLoan.setEndDate(today.plusMonths(durationInMonths));
 
-        // Calculate monthly repayment amount
-        BigDecimal repayAmount = applyLoan.getAmount().divide(
-            BigDecimal.valueOf(durationInMonths), RoundingMode.HALF_UP
-        );
-        applyLoan.setRepayAmount(repayAmount);
+    // Ensure scale of 2
+    BigDecimal amount = applyLoan.getAmount().setScale(2, RoundingMode.HALF_UP);
+    BigDecimal repayAmount = amount.divide(BigDecimal.valueOf(durationInMonths), 2, RoundingMode.HALF_UP);
 
-        // Update user loan balance
-        User user = applyLoan.getUser();
-        user.setLoanBalance(user.getLoanBalance().add(applyLoan.getAmount()));
-        userRepository.save(user);
+    applyLoan.setAmount(amount);
+    applyLoan.setBalance(amount);
+    applyLoan.setRepayAmount(repayAmount);
 
-        notificationRepository.save(Notification.builder()
-            .recipient(applyLoan.getUser())
-            .type(NotificationType.LOAN_APPROVED)
-            .referenceId(applyLoan.getId())
-            .message("Your" + applyLoan.getType() + " loan of ₦" + applyLoan.getAmount() + " has been approved.")
-            .build());
+    User user = applyLoan.getUser();
+    user.setLoanBalance(user.getLoanBalance().add(amount).setScale(2, RoundingMode.HALF_UP));
+    userRepository.save(user);
 
-        EmailDetails emailDetails = EmailDetails.builder()
+    notificationRepository.save(Notification.builder()
+        .recipient(user)
+        .type(NotificationType.LOAN_APPROVED)
+        .referenceId(applyLoan.getId())
+        .message("Your " + applyLoan.getType() + " loan of ₦" + amount + " has been approved.")
+        .build());
+
+    emailService.sendEmail(EmailDetails.builder()
         .recipient(user.getEmail())
         .subject("Loan Approved")
-        .message("Congratulations, your" + applyLoan.getType() + " loan of ₦" + applyLoan.getAmount() + " has been approved. Login to the app to view more details.")
-        .build();
+        .message("Congratulations, your " + applyLoan.getType() + " loan of ₦" + amount + " has been approved. Login to the app to view more details.")
+        .build());
 
-        emailService.sendEmail(emailDetails);
+    return loanRepository.save(applyLoan);
+}
 
-        // Save and return updated loan
-        return loanRepository.save(applyLoan);
-    }
 
     @Override
     public Loan rejectLoan(Long loanId, LoanDto loanDto) throws LoanException {

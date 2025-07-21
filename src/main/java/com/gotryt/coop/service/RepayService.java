@@ -9,6 +9,5 @@ import com.gotryt.coop.model.User;
 public interface RepayService {
 
     public RepayResponse repayNow(User user, Long loanId, RepayDto repayDto) throws LoanException, RepayException;
-
     
 }

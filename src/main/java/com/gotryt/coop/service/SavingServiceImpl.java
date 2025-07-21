@@ -42,7 +42,7 @@ public class SavingServiceImpl implements SavingService {
             .amount(user.getPlan())
             .txnId(TxnIdGen.generateTransactionId())
             .balance(updatedBalance)
-            .status("submitted")
+            .status("approved")
             .user(user)
             .build();
 

@@ -15,7 +15,7 @@ import lombok.*;
 public class OTP {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     private String otp;         
     private String email; 

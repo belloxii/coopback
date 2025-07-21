@@ -26,7 +26,7 @@ import lombok.NoArgsConstructor;
 public class Saving {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     private String  txnId;
     private String  status;

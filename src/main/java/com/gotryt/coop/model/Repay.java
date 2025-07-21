@@ -26,7 +26,7 @@ import lombok.NoArgsConstructor;
 public class Repay {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private BigDecimal amount;

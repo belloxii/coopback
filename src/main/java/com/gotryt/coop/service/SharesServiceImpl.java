@@ -75,7 +75,7 @@ public class SharesServiceImpl implements SharesService {
                 .user(user)
                 .txnId(TxnIdGen.generateTransactionId())
                 .type("debit")
-                .status("submitted")
+                .status("approved")
                 .amount(amountToWithdraw)
                 .balance(newBalance)
                 .accountDetails(sharesDetails.getAccountDetails())

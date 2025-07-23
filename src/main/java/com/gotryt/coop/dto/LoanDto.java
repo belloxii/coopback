@@ -19,7 +19,7 @@ public class LoanDto {
     private String type;
     private String purpose;
     private String remark;
-    private String duration;
+    private Integer duration;
     private String accountDetails;
     private String guarantor1;
     private String guarantor2;

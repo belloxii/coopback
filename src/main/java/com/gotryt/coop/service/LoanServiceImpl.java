@@ -136,60 +136,58 @@ public class LoanServiceImpl implements LoanService {
             .build();
     }
 
-@Override
-public Loan approveLoan(Long loanId) throws LoanException {
-    Loan applyLoan = loanRepository.findById(loanId)
-        .orElseThrow(() -> new LoanException("Loan not found"));
+    @Override
+    public Loan approveLoan(Long loanId) throws LoanException {
+        Loan applyLoan = loanRepository.findById(loanId)
+            .orElseThrow(() -> new LoanException("Loan not found"));
 
-    String durationStr = applyLoan.getDuration();
-    if (durationStr == null || durationStr.trim().isEmpty()) {
-        throw new LoanException("Loan duration is missing or invalid.");
+        Integer duration = applyLoan.getDuration();
+        if (duration == null || duration <= 0) {
+            throw new LoanException("Loan duration must be a positive number.");
+        }
+
+        long durationInMonths = duration.longValue(); // ✅ directly convert Integer to long
+
+        LocalDate today = LocalDate.now();
+        applyLoan.setStatus("approved");
+        applyLoan.setStartDate(today);
+        applyLoan.setEndDate(today.plusMonths(durationInMonths));
+
+        // Set amount and repayment values with scale of 2
+        BigDecimal amount = applyLoan.getAmount().setScale(2, RoundingMode.HALF_UP);
+        BigDecimal repayAmount = amount
+            .divide(BigDecimal.valueOf(durationInMonths), 2, RoundingMode.HALF_UP);
+
+        applyLoan.setAmount(amount);
+        applyLoan.setBalance(amount);
+        applyLoan.setRepayAmount(repayAmount);
+        applyLoan.setInstallmentsPaid(0); // ✅ set as Integer
+
+        // Update user loan balance
+        User user = applyLoan.getUser();
+        user.setLoanBalance(user.getLoanBalance()
+            .add(amount)
+            .setScale(2, RoundingMode.HALF_UP));
+        userRepository.save(user);
+
+        // Create notification
+        notificationRepository.save(Notification.builder()
+            .recipient(user)
+            .type(NotificationType.LOAN_APPROVED)
+            .referenceId(applyLoan.getId())
+            .message("Your " + applyLoan.getType() + " loan of ₦" + amount + " has been approved.")
+            .build());
+
+        // Send email
+        emailService.sendEmail(EmailDetails.builder()
+            .recipient(user.getEmail())
+            .subject("Loan Approved")
+            .message("Congratulations, your " + applyLoan.getType() + " loan of ₦" + amount +
+                " has been approved. Login to the app to view more details.")
+            .build());
+
+        return loanRepository.save(applyLoan);
     }
-
-    long durationInMonths;
-    try {
-        durationInMonths = Long.parseLong(durationStr.trim());
-    } catch (NumberFormatException e) {
-        throw new LoanException("Loan duration must be a valid numeric value.");
-    }
-
-    if (durationInMonths <= 0) {
-        throw new LoanException("Loan duration must be greater than zero.");
-    }
-
-    LocalDate today = LocalDate.now();
-    applyLoan.setStatus("approved");
-    applyLoan.setStartDate(today);
-    applyLoan.setEndDate(today.plusMonths(durationInMonths));
-
-    // Ensure scale of 2
-    BigDecimal amount = applyLoan.getAmount().setScale(2, RoundingMode.HALF_UP);
-    BigDecimal repayAmount = amount.divide(BigDecimal.valueOf(durationInMonths), 2, RoundingMode.HALF_UP);
-
-    applyLoan.setAmount(amount);
-    applyLoan.setBalance(amount);
-    applyLoan.setRepayAmount(repayAmount);
-
-    User user = applyLoan.getUser();
-    user.setLoanBalance(user.getLoanBalance().add(amount).setScale(2, RoundingMode.HALF_UP));
-    userRepository.save(user);
-
-    notificationRepository.save(Notification.builder()
-        .recipient(user)
-        .type(NotificationType.LOAN_APPROVED)
-        .referenceId(applyLoan.getId())
-        .message("Your " + applyLoan.getType() + " loan of ₦" + amount + " has been approved.")
-        .build());
-
-    emailService.sendEmail(EmailDetails.builder()
-        .recipient(user.getEmail())
-        .subject("Loan Approved")
-        .message("Congratulations, your " + applyLoan.getType() + " loan of ₦" + amount + " has been approved. Login to the app to view more details.")
-        .build());
-
-    return loanRepository.save(applyLoan);
-}
-
 
     @Override
     public Loan rejectLoan(Long loanId, LoanDto loanDto) throws LoanException {

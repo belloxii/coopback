@@ -55,7 +55,8 @@ public class Loan {
     private String accountDetails;
     private LocalDate startDate;
     private LocalDate EndDate;
-    private String duration;
+    private Integer duration;
+    private Integer installmentsPaid;
 
     @Builder.Default
     // private List<Repay> repays = new ArrayList<>();

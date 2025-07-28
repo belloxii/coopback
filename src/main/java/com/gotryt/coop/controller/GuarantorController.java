@@ -23,7 +23,7 @@ public class GuarantorController {
 
     // ✅ 1. Get all loans where user is a guarantor
     @GetMapping("/myrequests")
-    public ResponseEntity<?> getGuarantorRequests(@RequestHeader("Authorization") String jwt) {
+    public ResponseEntity<List<Loan>> getGuarantorRequests(@RequestHeader("Authorization") String jwt) {
         User user = userService.findUserProfileByJwt(jwt).getUser();
         List<Loan> loans = loanRepository.findAll().stream()
             .filter(loan ->

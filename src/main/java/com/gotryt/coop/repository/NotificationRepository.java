@@ -6,15 +6,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.gotryt.coop.model.Notification;
 
-
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
 
-    List<Notification> findByUserIdOrderByCreatedAtDesc(Long id);
+    List<Notification> findByRecipientIdOrderByTimestampDesc(Long recipientId);
 
-    void deleteByUserId(Long id);
+    List<Notification> findByRecipientIdAndIsReadFalse(Long recipientId);
 
-    List<Notification> findByUserIdAndReadFalse(Long id);
+    List<Notification> findByRecipientIdAndIsReadFalseOrderByTimestampDesc(Long recipientId);
 
-    List<Notification> findByUserIdAndReadFalseOrderByCreatedAtDesc(Long id);
-
+    void deleteByRecipientId(Long recipientId);
 }

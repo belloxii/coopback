@@ -52,6 +52,11 @@ public class Loan {
     @ManyToOne
     private User guarantor2;
 
+    @Builder.Default
+    private String guarantor1Status = "PENDING";
+    @Builder.Default
+    private String guarantor2Status = "PENDING";
+
     private String accountDetails;
     private LocalDate startDate;
     private LocalDate EndDate;

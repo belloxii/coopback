@@ -130,6 +130,20 @@ public class LoanServiceImpl implements LoanService {
             .timestamp(LocalDateTime.now())
             .build());
 
+        emailService.sendEmail(EmailDetails.builder()
+            .recipient(guarantor1.getEmail())
+            .subject("Guarantor Request")
+            .message("Good day, " + guarantor1.getFirstName() + "\nYou have been selected as a guarantor for a loan by " + fullName +
+                ".\n\nKindly log into the COOPR8 app to respond to this request.")
+            .build());
+
+        emailService.sendEmail(EmailDetails.builder()
+            .recipient(guarantor2.getEmail())
+            .subject("Guarantor Request")
+            .message("Good day, " + guarantor2.getFirstName() + "\nYou have been selected as a guarantor for a loan by " + fullName +
+                ".\n\nKindly log into the COOPR8 app to respond to this request.")
+            .build());
+            
         return LoanResponse.builder()
             .responseCode("100")
             .responseMessage("Loan application submitted✅.")
@@ -206,13 +220,13 @@ public class LoanServiceImpl implements LoanService {
             .recipient(applyLoan.getUser())
             .type(NotificationType.LOAN_DECLINED)
             .referenceId(applyLoan.getId())
-            .message("Your" + applyLoan.getType() + " loan of ₦" + applyLoan.getAmount() + " has been declined.")
+            .message("Your " + applyLoan.getType() + " loan of ₦" + applyLoan.getAmount() + " has been declined.")
             .build());
     
         EmailDetails emailDetails = EmailDetails.builder()
         .recipient(user.getEmail())
         .subject("Loan Declined")
-        .message("This is to notify you that your" + applyLoan.getType() + " loan of ₦" + applyLoan.getAmount() + " was declined. Login to the app to view more details.")
+        .message("This is to notify you that your " + applyLoan.getType() + " loan of ₦" + applyLoan.getAmount() + " was declined. Login to the app to view more details.")
         .build();
 
         emailService.sendEmail(emailDetails);

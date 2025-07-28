@@ -1,7 +1,9 @@
 package com.gotryt.coop.controller;
 
 import com.gotryt.coop.model.Loan;
+import com.gotryt.coop.model.User;
 import com.gotryt.coop.repository.LoanRepository;
+import com.gotryt.coop.service.UserService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -17,14 +19,16 @@ import java.util.stream.Collectors;
 public class GuarantorController {
 
     private final LoanRepository loanRepository;
+    private final UserService userService;
 
     // ✅ 1. Get all loans where user is a guarantor
-    @GetMapping("/requests/{userId}")
-    public ResponseEntity<?> getGuarantorRequests(@PathVariable Long userId) {
+    @GetMapping("/myrequests")
+    public ResponseEntity<?> getGuarantorRequests(@RequestHeader("Authorization") String jwt) {
+        User user = userService.findUserProfileByJwt(jwt).getUser();
         List<Loan> loans = loanRepository.findAll().stream()
             .filter(loan ->
-                (loan.getGuarantor1() != null && loan.getGuarantor1().getId().equals(userId)) ||
-                (loan.getGuarantor2() != null && loan.getGuarantor2().getId().equals(userId))
+                (loan.getGuarantor1() != null && loan.getGuarantor1().getId().equals(user.getId())) ||
+                (loan.getGuarantor2() != null && loan.getGuarantor2().getId().equals(user.getId()))
             ).collect(Collectors.toList());
 
         return ResponseEntity.ok(loans);
@@ -32,13 +36,13 @@ public class GuarantorController {
 
     // ✅ 2. Accept guarantor request
     @PutMapping("/accept")
-    public ResponseEntity<?> acceptGuarantorRequest(@RequestParam Long loanId, @RequestParam Long userId) {
+    public ResponseEntity<?> acceptGuarantorRequest(@RequestHeader("Authorization") String jwt, @RequestParam Long loanId, @RequestParam Long userId) {
         return updateGuarantorStatus(loanId, userId, "ACCEPTED");
     }
 
     // ✅ 3. Decline guarantor request
     @PutMapping("/decline")
-    public ResponseEntity<?> declineGuarantorRequest(@RequestParam Long loanId, @RequestParam Long userId) {
+    public ResponseEntity<?> declineGuarantorRequest(@RequestHeader("Authorization") String jwt, @RequestParam Long loanId, @RequestParam Long userId) {
         return updateGuarantorStatus(loanId, userId, "DECLINED");
     }
 

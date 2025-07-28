@@ -36,14 +36,16 @@ public class GuarantorController {
 
     // ✅ 2. Accept guarantor request
     @PutMapping("/accept")
-    public ResponseEntity<?> acceptGuarantorRequest(@RequestHeader("Authorization") String jwt, @RequestParam Long loanId, @RequestParam Long userId) {
-        return updateGuarantorStatus(loanId, userId, "ACCEPTED");
+    public ResponseEntity<?> acceptGuarantorRequest(@RequestHeader("Authorization") String jwt, @RequestParam Long loanId) {
+        User user = userService.findUserProfileByJwt(jwt).getUser();
+        return updateGuarantorStatus(loanId, user.getId(), "ACCEPTED");
     }
 
     // ✅ 3. Decline guarantor request
     @PutMapping("/decline")
-    public ResponseEntity<?> declineGuarantorRequest(@RequestHeader("Authorization") String jwt, @RequestParam Long loanId, @RequestParam Long userId) {
-        return updateGuarantorStatus(loanId, userId, "DECLINED");
+    public ResponseEntity<?> declineGuarantorRequest(@RequestHeader("Authorization") String jwt, @RequestParam Long loanId) {
+        User user = userService.findUserProfileByJwt(jwt).getUser();
+        return updateGuarantorStatus(loanId, user.getId(), "DECLINED");
     }
 
     // ✅ 4. Shared method

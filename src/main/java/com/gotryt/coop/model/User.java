@@ -51,6 +51,7 @@ public class User implements UserDetails {
     private BigDecimal sharesBalance;
     private BigDecimal totalPurchase;
     private BigDecimal plan;
+    private BigDecimal profit;
 
     private String email;
     private String passport;

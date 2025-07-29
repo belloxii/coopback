@@ -114,6 +114,7 @@ public AuthResponse createAccount(UserRequest userRequest) {
         .memship(memship)
         .ledgerNumber(nextLedgerNumber)
         .savingsBalance(BigDecimal.ZERO)
+        .profit(BigDecimal.ZERO)
         .loanBalance(BigDecimal.ZERO)
         .sharesBalance(BigDecimal.ZERO)
         .totalPurchase(BigDecimal.ZERO)

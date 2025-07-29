@@ -4,9 +4,7 @@ import com.gotryt.coop.model.Loan;
 import com.gotryt.coop.model.User;
 import com.gotryt.coop.repository.LoanRepository;
 import com.gotryt.coop.service.UserService;
-
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,51 +21,62 @@ public class GuarantorController {
 
     // ✅ 1. Get all loans where user is a guarantor
     @GetMapping("/myrequests")
-    public ResponseEntity<List<Loan>> getGuarantorRequests(@RequestHeader("Authorization") String jwt) {
+    public List<Loan> getGuarantorRequests(@RequestHeader("Authorization") String jwt) {
         User user = userService.findUserProfileByJwt(jwt).getUser();
-        List<Loan> loans = loanRepository.findAll().stream()
+        return loanRepository.findAll().stream()
             .filter(loan ->
                 (loan.getGuarantor1() != null && loan.getGuarantor1().getId().equals(user.getId())) ||
                 (loan.getGuarantor2() != null && loan.getGuarantor2().getId().equals(user.getId()))
             ).collect(Collectors.toList());
-
-        return ResponseEntity.ok(loans);
     }
 
-    // ✅ 2. Accept guarantor request
+    // ✅ 2. Accept guarantor request - separate method
     @PutMapping("/accept")
-    public ResponseEntity<?> acceptGuarantorRequest(@RequestHeader("Authorization") String jwt, @RequestParam Long loanId) {
+    public ResponseEntity<?> acceptGuarantor(@RequestHeader("Authorization") String jwt, @RequestParam Long loanId) {
         User user = userService.findUserProfileByJwt(jwt).getUser();
-        return updateGuarantorStatus(loanId, user.getId(), "ACCEPTED");
-    }
-
-    // ✅ 3. Decline guarantor request
-    @PutMapping("/decline")
-    public ResponseEntity<?> declineGuarantorRequest(@RequestHeader("Authorization") String jwt, @RequestParam Long loanId) {
-        User user = userService.findUserProfileByJwt(jwt).getUser();
-        return updateGuarantorStatus(loanId, user.getId(), "DECLINED");
-    }
-
-    // ✅ 4. Shared method
-    private ResponseEntity<?> updateGuarantorStatus(Long loanId, Long userId, String status) {
         Loan loan = loanRepository.findById(loanId)
             .orElseThrow(() -> new RuntimeException("Loan not found"));
 
-        boolean updated = false;
+        boolean isGuarantor = false;
 
-        if (loan.getGuarantor1() != null && loan.getGuarantor1().getId().equals(userId)) {
-            loan.setGuarantor1Status(status);
-            updated = true;
-        } else if (loan.getGuarantor2() != null && loan.getGuarantor2().getId().equals(userId)) {
-            loan.setGuarantor2Status(status);
-            updated = true;
+        if (loan.getGuarantor1() != null && loan.getGuarantor1().getId().equals(user.getId())) {
+            loan.setGuarantor1Status("ACCEPTED");
+            isGuarantor = true;
+        } else if (loan.getGuarantor2() != null && loan.getGuarantor2().getId().equals(user.getId())) {
+            loan.setGuarantor2Status("ACCEPTED");
+            isGuarantor = true;
         }
 
-        if (!updated) {
+        if (!isGuarantor) {
             return ResponseEntity.badRequest().body("User is not a guarantor for this loan");
         }
 
         loanRepository.save(loan);
-        return ResponseEntity.ok("Guarantor status updated to " + status);
+        return ResponseEntity.ok("Guarantor request accepted.");
+    }
+
+    // ✅ 3. Decline guarantor request - separate method
+    @PutMapping("/decline")
+    public ResponseEntity<?> declineGuarantor(@RequestHeader("Authorization") String jwt, @RequestParam Long loanId) {
+        User user = userService.findUserProfileByJwt(jwt).getUser();
+        Loan loan = loanRepository.findById(loanId)
+            .orElseThrow(() -> new RuntimeException("Loan not found"));
+
+        boolean isGuarantor = false;
+
+        if (loan.getGuarantor1() != null && loan.getGuarantor1().getId().equals(user.getId())) {
+            loan.setGuarantor1Status("DECLINED");
+            isGuarantor = true;
+        } else if (loan.getGuarantor2() != null && loan.getGuarantor2().getId().equals(user.getId())) {
+            loan.setGuarantor2Status("DECLINED");
+            isGuarantor = true;
+        }
+
+        if (!isGuarantor) {
+            return ResponseEntity.badRequest().body("User is not a guarantor for this loan");
+        }
+
+        loanRepository.save(loan);
+        return ResponseEntity.ok("Guarantor request declined.");
     }
 }

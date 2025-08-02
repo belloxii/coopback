@@ -16,8 +16,14 @@ public class JwtProvider {
 
     SecretKey key = Keys.hmacShaKeyFor(JwtConstant.SECRET_KEY.getBytes());
 
+    public static final long JWT_EXPIRATION_MS = 3 * 60 * 60 * 1000; // 3 hours
+
     public String generateToken(Authentication auth) {
-        String jwt = Jwts.builder().setIssuedAt(new Date()).setExpiration(new Date(new Date().getTime()+86400000)).claim("memship", auth.getName()).signWith(key).compact();
+        String jwt = Jwts.builder()
+            .setIssuedAt(new Date())
+            .setExpiration(new Date(new Date().getTime()+JWT_EXPIRATION_MS))
+            .claim("memship", auth.getName())
+            .signWith(key).compact();
 
     return jwt;
     }

@@ -34,10 +34,10 @@ public class SavingController {
     //     return savingService.saveNow(user);
     // }
 
-    @GetMapping("/all")
-    public List<Saving> allsaSavings(@RequestHeader("Authorization") String jwt) throws SavingException {
-        return savingRepository.findAll();
-    }
+    // @GetMapping("/all")
+    // public List<Saving> allsaSavings(@RequestHeader("Authorization") String jwt) throws SavingException {
+    //     return savingRepository.findAll();
+    // }
 
     @GetMapping("/mysavings")
     public List<Saving> mySavings(@RequestHeader("Authorization") String jwt) throws SavingException {
@@ -50,10 +50,10 @@ public class SavingController {
         return savingRepository.findById(savingId);
     }
 
-    @GetMapping("/user/{userId}")
-    public List<Saving> savingByUserId(@RequestHeader("Authorization") String jwt, @PathVariable Long userId) throws SavingException {
-        return savingRepository.findByUser_Id(userId);
-    }
+    // @GetMapping("/user/{userId}")
+    // public List<Saving> savingByUserId(@RequestHeader("Authorization") String jwt, @PathVariable Long userId) throws SavingException {
+    //     return savingRepository.findByUser_Id(userId);
+    // }
 
     @GetMapping("/last")
     public Optional<Saving> lastSavings(@RequestHeader("Authorization") String jwt) throws SavingException {

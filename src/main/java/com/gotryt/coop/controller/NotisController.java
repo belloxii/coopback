@@ -18,12 +18,6 @@ public class NotisController {
     private final NotificationRepository notificationRepository;
     private final UserService userService;
 
-    // Admin or Debug: Get all notifications
-    @GetMapping("/all")
-    public ResponseEntity<List<Notification>> getAllNotifications() {
-        return ResponseEntity.ok(notificationRepository.findAll());
-    }
-
     // Get all notifications for the logged-in user
     @GetMapping("/mynotis")
     public ResponseEntity<List<Notification>> getUserNotifications(@RequestHeader("Authorization") String jwt) {

@@ -47,7 +47,7 @@ public class AppConfig {
             @Override
             public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
                 CorsConfiguration cfg = new CorsConfiguration();
-                cfg.setAllowedOrigins(Arrays.asList("http://localhost:3000", "https://coopr8.vercel.app", "https://coopr8.invo.com.ng"));
+                cfg.setAllowedOrigins(Arrays.asList("http://localhost:3000", "https://coopr8.vercel.app", "https://coopr8.invo.com.ng" ));
                 cfg.setAllowedMethods(Collections.singletonList("*"));
                 cfg.setAllowCredentials(true);
                 cfg.setAllowedHeaders(Collections.singletonList("*"));

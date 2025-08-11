@@ -1,15 +1,16 @@
 package com.gotryt.coop.config;
 
 import java.io.IOException;
+import java.util.Base64;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.crypto.SecretKey;
 
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -25,30 +26,48 @@ public class JwtTokenValidator extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-            throws ServletException, IOException {
+        throws ServletException, IOException {
 
-                String jwt = request.getHeader(JwtConstant.JWT_HEADER);
+        String token = request.getHeader(JwtConstant.JWT_HEADER);
 
-                if (jwt != null) {
-                    jwt = jwt.substring(7);
+        if (token != null && token.startsWith("Bearer ")) {
+            token = token.substring(7);
 
-                    try {
-                        SecretKey key = Keys.hmacShaKeyFor(JwtConstant.SECRET_KEY.getBytes());
-                        Claims claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(jwt).getBody();
+            try {
+                byte[] decodedKey = Base64.getDecoder().decode(JwtConstant.SECRET_KEY);
+                SecretKey key = Keys.hmacShaKeyFor(decodedKey);
 
-                        String memship = String.valueOf(claims.get("memship"));
-                        String authorities = String.valueOf(claims.get("authorities"));
+                Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
 
-                        List<GrantedAuthority> auths = AuthorityUtils.commaSeparatedStringToAuthorityList(authorities);
-                        Authentication authentication = new UsernamePasswordAuthenticationToken(memship, null, auths);
+                System.out.println("JWT Claims: " + claims);
 
-                        SecurityContextHolder.getContext().setAuthentication(authentication);
-                    } catch (Exception e) {
-                        throw new BadCredentialsException("invalid token");
-                    }
-                    
-                }
-                filterChain.doFilter(request, response);
+                String memship = claims.get("memship", String.class);
+
+                @SuppressWarnings("unchecked")
+                List<String> roles = claims.get("roles", List.class);
+
+                System.out.println("Roles from JWT: " + roles);
+
+                List<SimpleGrantedAuthority> authorities = roles.stream()
+                    .map(SimpleGrantedAuthority::new)
+                    .collect(Collectors.toList());
+
+                Authentication auth = new UsernamePasswordAuthenticationToken(memship, null, authorities);
+
+                System.out.println("Authentication object: " + auth);
+
+                SecurityContextHolder.getContext().setAuthentication(auth);
+
+
+            } catch (Exception e) {
+                throw new BadCredentialsException("Invalid token: " + e.getMessage());
+            }
+        }
+
+        filterChain.doFilter(request, response);
     }
-
 }

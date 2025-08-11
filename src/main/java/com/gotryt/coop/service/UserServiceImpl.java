@@ -19,6 +19,8 @@ import java.util.stream.Collectors;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -120,7 +122,7 @@ public AuthResponse createAccount(UserRequest userRequest) {
         .totalPurchase(BigDecimal.ZERO)
         .plan(userRequest.getPlan())
         .status("NEW")
-        .role(Role.MEMBER)
+        .role(Role.ROLE_MEMBER)
         .build();
 
     // Save to database
@@ -179,9 +181,12 @@ public AuthResponse createAccount(UserRequest userRequest) {
                 .build();
         }
     
-        Authentication authentication = new UsernamePasswordAuthenticationToken(loginDto.getMemship(), loginDto.getPassword());
+         // Retrieve user roles (here assuming a simple role-based approach)
+        List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(user.getRole().toString()));
+
+        Authentication authentication = new UsernamePasswordAuthenticationToken(loginDto.getMemship(), loginDto.getPassword(), authorities);
         SecurityContextHolder.getContext().setAuthentication(authentication);
-    
+
         String jwt = jwtProvider.generateToken(authentication);
     
         return AuthResponse.builder()
@@ -386,7 +391,7 @@ public AuthResponse createAccount(UserRequest userRequest) {
     EmailDetails emailDetails = EmailDetails.builder()
         .recipient(user.getEmail())
         .subject("Account Activated")
-        .message("Congratulations, your account COOPR8 has been activated.\n\n"
+        .message("Congratulations, your COOPR8 account has been activated.\n\n"
                 + "Account Name: " + names
                 + "\nMembership Number: " + user.getMemship()
                 + "\nPassword: 123456\n\nYou can now login to your COOPR8 account with your Membership Number and password.")
@@ -410,7 +415,7 @@ public List<User> addMultiUsers(List<User> users) throws UserException {
             user.setPhone(u.getPhone());
             user.setMemship(u.getMemship());
             user.setStatus("new"); // default status
-            user.setRole(Role.MEMBER);  // default role
+            user.setRole(Role.ROLE_MEMBER);  // default role
             user.setCreatedAt(LocalDateTime.now());
             return user;
         })

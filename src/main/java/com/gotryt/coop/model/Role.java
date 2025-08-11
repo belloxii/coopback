@@ -2,7 +2,7 @@ package com.gotryt.coop.model;
 
 public enum Role {
 
-    MEMBER,
-    ADMIN
+    ROLE_MEMBER,
+    ROLE_ADMIN
 
 }

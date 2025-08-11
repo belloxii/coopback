@@ -7,7 +7,9 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.gotryt.coop.dto.AuthResponse;
 import com.gotryt.coop.dto.LoanDto;
+import com.gotryt.coop.dto.UserRequest;
 import com.gotryt.coop.exception.LoanException;
 import com.gotryt.coop.exception.SavingException;
 import com.gotryt.coop.exception.UserException;
@@ -78,7 +80,7 @@ public class AdminController {
     } 
 
     @PostMapping("/users/multi")
-    public List<User> addMultiUsers(@RequestBody List<User> users) throws UserException {
+    public List<AuthResponse> addMultiUsers(@RequestBody List<UserRequest> users) throws UserException {
         return userService.addMultiUsers(users);
     }
 

@@ -51,11 +51,6 @@ public class LoanController {
         return loanService.applyLoan(user, loanRequest);
     }
 
-    // @GetMapping("/all")
-    // public List<Loan> allLoans(@RequestHeader("Authorization") String jwt) throws LoanException {
-    //     return loanRepository.findAll();
-    // }
-
     @GetMapping("/myloans")
     public List<Loan> myLoans(@RequestHeader("Authorization") String jwt) throws LoanException {
         User user = userService.findUserProfileByJwt(jwt).getUser();
@@ -66,21 +61,6 @@ public class LoanController {
     public Optional<Loan> loanById(@RequestHeader("Authorization") String jwt, @PathVariable Long loanId) throws LoanException {
         return loanRepository.findById(loanId);
     }
-
-    // @GetMapping("/user/{userId}")
-    // public List<Loan> loanByUserId(@RequestHeader("Authorization") String jwt, @PathVariable Long userId) throws LoanException {
-    //     return loanRepository.findByUser_Id(userId);
-    // }
-
-    // @PutMapping("/{loanId}/approve")
-    // public Loan approveLoan(@RequestHeader("Authorization") String jwt, @PathVariable Long loanId) throws LoanException {
-    //     return loanService.approveLoan(loanId);
-    // }
-
-    // @PutMapping("/{loanId}/reject")
-    // public Loan rejectLoan(@RequestHeader("Authorization") String jwt, @PathVariable Long loanId, @RequestBody LoanDto loanDto) throws LoanException {
-    //     return loanService.rejectLoan(loanId, loanDto);
-    // }
 
     @PostMapping("/{loanId}/repay")
     public RepayResponse addRepay(@RequestHeader("Authorization") String jwt, @PathVariable Long loanId, @RequestBody RepayDto repayRequest) throws RepayException, LoanException {
@@ -93,15 +73,5 @@ public class LoanController {
         User user = userService.findUserProfileByJwt(jwt).getUser();
         return repayRepository.findByUser_Id(user.getId());
     }
-
-    // @GetMapping("/repays")
-    // public List<Repay> allRepay(@RequestHeader("Authorization") String jwt) {
-    //     return repayRepository.findAll();
-    // }
-
-    // @GetMapping("/repays/user/{userId}")
-    // public List<Repay> userRepay(@RequestHeader("Authorization") String jwt, @PathVariable Long userId) {
-    //     return repayRepository.findByUser_Id(userId);
-    // }
 
 }

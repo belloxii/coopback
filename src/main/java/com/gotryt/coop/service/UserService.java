@@ -16,7 +16,7 @@ public interface UserService {
     AuthResponse login(LoginDto loginDto);
     AuthResponse findUserProfileByJwt(String jwt);    
     // User findUserById(Long userId) throws UserException;    
-    List<User> addMultiUsers(List<User> user) throws UserException;    
+    public List<AuthResponse> addMultiUsers(List<UserRequest> requests) throws UserException;
     public User updateUser(User user) throws UserException;
     public User activateUser(Long userId) throws UserException;
     public CoopResponse changePassword(User user, PasswordDto passwordDto) throws UserException;

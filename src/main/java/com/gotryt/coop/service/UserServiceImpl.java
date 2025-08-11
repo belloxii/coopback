@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -145,6 +146,7 @@ public AuthResponse createAccount(UserRequest userRequest) {
     return AuthResponse.builder()
         .responseCode("100")
         .responseMessage("Account created successfully! Kindly check your email for more info.")
+        // .user(createdUser)
         .build();
 }
 
@@ -403,25 +405,16 @@ public AuthResponse createAccount(UserRequest userRequest) {
 
         return userRepository.save(user);
     }
-
-@Override
-public List<User> addMultiUsers(List<User> users) throws UserException {
-    List<User> newUsers = users.stream()
-        .map(u -> {
-            User user = new User();
-            user.setFirstName(u.getFirstName());
-            user.setLastName(u.getLastName());
-            user.setEmail(u.getEmail());
-            user.setPhone(u.getPhone());
-            user.setMemship(u.getMemship());
-            user.setStatus("new"); // default status
-            user.setRole(Role.ROLE_MEMBER);  // default role
-            user.setCreatedAt(LocalDateTime.now());
-            return user;
-        })
-        .collect(Collectors.toList());
-
-    return userRepository.saveAll(newUsers);
-}
+    
+    @Override
+    public List<AuthResponse> addMultiUsers(List<UserRequest> requests) throws UserException {
+        return requests.stream()
+                   .map(req -> {
+                       AuthResponse authResponse = createAccount(req);
+                       return authResponse; // now populated
+                   })
+                   .filter(Objects::nonNull) // safety: skip if somehow null
+                   .collect(Collectors.toList());
+    }
 
 }

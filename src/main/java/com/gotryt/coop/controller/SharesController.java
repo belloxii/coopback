@@ -21,9 +21,7 @@ import java.util.List;
 public class SharesController {
 
     private final UserService userService;
-
     private final SharesService sharesService;
-
     private final SharesRepository sharesRepository;
 
     @PostMapping("/add")
@@ -53,11 +51,6 @@ public class SharesController {
     public ResponseEntity<List<Shares>> getMyShares(@RequestHeader("Authorization") String jwt) throws SharesException {
         User user = userService.findUserProfileByJwt(jwt).getUser();
         return ResponseEntity.ok(sharesRepository.findByUser_Id(user.getId()));
-    }
-
-    @GetMapping("/all")
-    public ResponseEntity<List<Shares>> getAllShares(@RequestHeader("Authorization") String jwt) throws SharesException {
-        return ResponseEntity.ok(sharesRepository.findAll());
     }
 
     @GetMapping("/user/{userId}")

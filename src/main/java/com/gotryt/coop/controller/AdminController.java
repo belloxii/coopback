@@ -12,16 +12,19 @@ import com.gotryt.coop.dto.LoanDto;
 import com.gotryt.coop.dto.UserRequest;
 import com.gotryt.coop.exception.LoanException;
 import com.gotryt.coop.exception.SavingException;
+import com.gotryt.coop.exception.SharesException;
 import com.gotryt.coop.exception.UserException;
 import com.gotryt.coop.model.Loan;
 import com.gotryt.coop.model.Notification;
 import com.gotryt.coop.model.Repay;
 import com.gotryt.coop.model.Saving;
+import com.gotryt.coop.model.Shares;
 import com.gotryt.coop.model.User;
 import com.gotryt.coop.repository.LoanRepository;
 import com.gotryt.coop.repository.NotificationRepository;
 import com.gotryt.coop.repository.RepayRepository;
 import com.gotryt.coop.repository.SavingRepository;
+import com.gotryt.coop.repository.SharesRepository;
 import com.gotryt.coop.repository.UserRepository;
 import com.gotryt.coop.service.LoanService;
 import com.gotryt.coop.service.UserService;
@@ -48,6 +51,7 @@ public class AdminController {
     private final RepayRepository repayRepository;
     private final NotificationRepository notificationRepository;
     private final SavingRepository savingRepository;
+    private final SharesRepository sharesRepository;
 
     @GetMapping("/users")
     public List<User> allUsers(@RequestHeader("Authorization") String jwt) {
@@ -128,6 +132,11 @@ public class AdminController {
     @GetMapping("/savings/user/{userId}")
     public List<Saving> savingByUserId(@RequestHeader("Authorization") String jwt, @PathVariable Long userId) throws SavingException {
         return savingRepository.findByUser_Id(userId);
+    }
+
+    @GetMapping("/shares/all")
+    public ResponseEntity<List<Shares>> getAllShares(@RequestHeader("Authorization") String jwt) throws SharesException {
+        return ResponseEntity.ok(sharesRepository.findAll());
     }
     
 }

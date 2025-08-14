@@ -146,7 +146,7 @@ public AuthResponse createAccount(UserRequest userRequest) {
     return AuthResponse.builder()
         .responseCode("100")
         .responseMessage("Account created successfully! Kindly check your email for more info.")
-        // .user(createdUser)
+        .user(createdUser)
         .build();
 }
 
